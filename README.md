@@ -28,11 +28,9 @@ sudo apt-get update
 sudo apt-get install build-essential cmake libassimp-dev libglm-dev libglfw3-dev libglew-dev
 ```
 
-### Build Instructions
-
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/frederic-hallein/xpbd-softbody-implementation.git
+    git clone --recursive https://github.com/frederic-hallein/xpbd-softbody-implementation.git
     ```
 
 2. **Enter the project directory:**
@@ -60,6 +58,11 @@ sudo apt-get install build-essential cmake libassimp-dev libglm-dev libglfw3-dev
     ```sh
     ./xpbd-softbody
     ```
+
+**Note:** Use `--recursive` flag when cloning to automatically fetch all submodules (including nlohmann_json). If you already cloned without it, run:
+```sh
+git submodule update --init --recursive
+```
 
 ---
 
