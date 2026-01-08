@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Texture.hpp"
 
 Texture::Texture(const std::string& name, const std::string& texturePath)

@@ -1,14 +1,10 @@
 #include "PhysicsEngine.hpp"
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
 
 PhysicsEngine::PhysicsEngine(
     const char* engineName,
-    int screenWidth,
-    int screenHeight
+    const unsigned int screenWidth,
+    const unsigned int screenHeight
 )
     : m_screenWidth(screenWidth),
       m_screenHeight(screenHeight)
@@ -46,100 +42,22 @@ PhysicsEngine::PhysicsEngine(
     framebufferSizeCallback(m_window, screenWidth, screenHeight);
     glfwSetFramebufferSizeCallback(m_window, framebufferSizeCallback);
 
-
-    // adding shaders
+    // create resource manager
     auto shaderManager = std::make_unique<ShaderManager>();
-    std::vector<std::unique_ptr<Shader>> shaders;
-    shaders.push_back(std::make_unique<Shader>(
-        "vertexNormal",
-        "../res/shaders/vertexNormal.vsh",
-        "../res/shaders/vertexNormal.fsh"
-    ));
-    shaders.push_back(std::make_unique<Shader>(
-        "faceNormal",
-        "../res/shaders/faceNormal.vsh",
-        "../res/shaders/faceNormal.fsh"
-    ));
-    shaders.push_back(std::make_unique<Shader>(
-        "light",
-        "../res/shaders/light.vsh",
-        "../res/shaders/light.fsh"
-    ));
-    shaders.push_back(std::make_unique<Shader>(
-        "platform",
-        "../res/shaders/platform.vsh",
-        "../res/shaders/platform.fsh"
-    ));
-    shaders.push_back(std::make_unique<Shader>(
-        "dirtblock",
-        "../res/shaders/dirtblock.vsh",
-        "../res/shaders/dirtblock.fsh"
-    ));
-    shaders.push_back(std::make_unique<Shader>(
-        "sphere",
-        "../res/shaders/sphere.vsh",
-        "../res/shaders/sphere.fsh"
-    ));
-    shaderManager->addResources(std::move(shaders));
-
-
-    // adding  meshes
     auto meshManager = std::make_unique<MeshManager>();
-    std::vector<std::unique_ptr<Mesh>> meshes;
-    meshes.push_back(std::make_unique<Mesh>(
-        "cube",
-        "../res/meshes/cube.obj"
-    ));
-    meshes.push_back(std::make_unique<Mesh>(
-        "sphere",
-        "../res/meshes/sphere.obj"
-    ));
-    meshManager->addResources(std::move(meshes));
-
-
-    // adding textures
     auto textureManager = std::make_unique<TextureManager>();
-    std::vector<std::unique_ptr<Texture>> textures;
-    textures.push_back(std::make_unique<Texture>(
-        "dirtblock",
-        "../res/textures/dirtblock.jpg"
-    ));
-    textureManager->addResources(std::move(textures));
-
-
-    // create camera
-    float FOV = 45.0f;
-    float nearPlane = 0.1f;
-    float farPlane = 150.0f;
-    float aspectRatio = static_cast<float>(m_screenWidth) / static_cast<float>(m_screenHeight);
-    auto camera = std::make_unique<Camera>(
-        glm::vec3(0.0f, 25.0f,  80.0f),
-        glm::vec3(0.0f, 0.0f, -1.0f),
-        glm::vec3(0.0f, 1.0f,  0.0f),
-        FOV,
-        aspectRatio,
-        nearPlane,
-        farPlane,
-        m_window
-    );
 
     // create scene
-    // TODO : REFACTOR SUCH THAT IT CAN CREATE MULTIPLE SCENE ENVIRONMENTS THAT CAN BE SELECTED
     m_scene = std::make_unique<Scene>(
         "Test Scene",
-        std::move(shaderManager),
-        std::move(meshManager),
-        std::move(textureManager),
-        std::move(camera)
+        m_window,
+        screenWidth,
+        screenHeight
     );
 
 
     // create debug window
-    const char* glslVersion = "#version 330";
-    m_debugWindow = std::make_unique<DebugWindow>(
-        m_window,
-        glslVersion
-    );
+    m_debugWindow = std::make_unique<DebugWindow>(m_window, "#version 330");
 
     std::cout << "ImGuiWindow created.\n";
 };
@@ -170,10 +88,7 @@ void PhysicsEngine::render()
         m_scene->render();
 
         m_debugWindow->newFrame();
-        m_debugWindow->update(
-            m_timer->frameDuration,
-            *m_scene
-        );
+        m_debugWindow->update(m_timer->frameDuration, *m_scene);
         m_debugWindow->render();
 
         glfwSwapBuffers(m_window);

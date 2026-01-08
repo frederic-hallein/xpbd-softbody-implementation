@@ -1,5 +1,8 @@
-#include "Mesh.hpp"
+#include <iostream>
+#include <set>
+
 #include "Object.hpp"
+#include "Mesh.hpp"
 
 void Mesh::constructVertices(const aiMesh* mesh)
 {

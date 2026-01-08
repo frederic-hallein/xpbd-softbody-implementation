@@ -26,10 +26,11 @@ target_sources(${PROJECT_NAME} PRIVATE ${IMGUI_SRC})
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include)
 target_include_directories(${PROJECT_NAME} PUBLIC ${GLM_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui/backends
 )
 
-target_link_libraries(${PROJECT_NAME} glfw OpenGL::GL assimp_CXX)
+target_link_libraries(${PROJECT_NAME} glfw OpenGL::GL assimp)

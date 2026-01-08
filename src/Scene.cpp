@@ -1,157 +1,209 @@
+#include <iostream>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
 #include "Scene.hpp"
 
 Shader Object::s_vertexNormalShader;
 Shader Object::s_faceNormalShader;
 
-void Scene::createObjects()
+const std::string RESOURCE_PATH = "../res/";
+const std::string CONFIG_PATH = "../config/";
+
+std::unique_ptr<Camera> Scene::createCamera(GLFWwindow* window, unsigned int screenWidth, unsigned int screenHeight)
 {
+    float FOV = 45.0f;
+    float nearPlane = 0.1f;
+    float farPlane = 150.0f;
+    float aspectRatio = static_cast<float>(screenWidth) / static_cast<float>(screenHeight);
+
+    return std::make_unique<Camera>(
+        glm::vec3(0.0f, 25.0f, 80.0f),
+        glm::vec3(0.0f, 0.0f, -1.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        FOV,
+        aspectRatio,
+        nearPlane,
+        farPlane,
+        window
+    );
+}
+
+std::unique_ptr<ShaderManager> Scene::loadShaders()
+{
+    auto shaderManager = std::make_unique<ShaderManager>();
+    std::vector<std::unique_ptr<Shader>> shaders;
+
+    const std::vector<std::tuple<const char*, const char*, const char*>> shaderData = {
+        {"vertexNormal", "vertexNormal.vsh", "vertexNormal.fsh"},
+        {"faceNormal", "faceNormal.vsh", "faceNormal.fsh"},
+        {"platform", "platform.vsh", "platform.fsh"},
+        {"dirtblock", "dirtblock.vsh", "dirtblock.fsh"},
+    };
+
+    for (const auto& [name, vsh, fsh] : shaderData) {
+        std::string vshPath = std::string(RESOURCE_PATH) + "shaders/" + vsh;
+        std::string fshPath = std::string(RESOURCE_PATH) + "shaders/" + fsh;
+        try {
+            shaders.push_back(std::make_unique<Shader>(name, vshPath.c_str(), fshPath.c_str()));
+            std::cout << "Shader loaded: " << name << '\n';
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to load shader " << name << ": " << e.what() << '\n';
+        }
+    }
+
+    shaderManager->addResources(std::move(shaders));
+    return shaderManager;
+}
+
+std::unique_ptr<MeshManager> Scene::loadMeshes()
+{
+    auto meshManager = std::make_unique<MeshManager>();
+    std::vector<std::unique_ptr<Mesh>> meshes;
+
+    const std::vector<std::tuple<const char*, const char*>> meshData = {
+        {"cube", "cube.obj"},
+    };
+
+    for (const auto& [name, filename] : meshData) {
+        std::string meshPath = std::string(RESOURCE_PATH) + "meshes/" + filename;
+        try {
+            meshes.push_back(std::make_unique<Mesh>(name, meshPath.c_str()));
+            std::cout << "Mesh loaded: " << name << '\n';
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to load mesh " << name << ": " << e.what() << '\n';
+        }
+    }
+
+    meshManager->addResources(std::move(meshes));
+    return meshManager;
+}
+
+std::unique_ptr<TextureManager> Scene::loadTextures()
+{
+    auto textureManager = std::make_unique<TextureManager>();
+    std::vector<std::unique_ptr<Texture>> textures;
+
+    const std::vector<std::tuple<const char*, const char*>> textureData = {
+        {"dirtblock", "dirtblock.jpg"}
+    };
+
+    for (const auto& [name, filename] : textureData) {
+        std::string texturePath = std::string(RESOURCE_PATH) + "textures/" + filename;
+        try {
+            textures.push_back(std::make_unique<Texture>(name, texturePath.c_str()));
+            std::cout << "Texture loaded: " << name << '\n';
+        } catch (const std::exception& e) {
+            std::cerr << "Failed to load texture " << name << ": " << e.what() << '\n';
+        }
+    }
+
+    textureManager->addResources(std::move(textures));
+    return textureManager;
+}
+
+void Scene::loadResources()
+{
+    m_shaderManager = loadShaders();
+    m_meshManager = loadMeshes();
+    m_textureManager = loadTextures();
+}
+
+std::unique_ptr<Object> Scene::createObject(const ObjectConfig& config)
+{
+    Transform transform;
+    transform.setProjection(*m_camera);
+
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), config.position);
+    model = glm::rotate(model, glm::radians(config.rotationDeg), config.rotationAxis);
+    model = glm::scale(model, config.scale);
+
+    transform.setModel(model);
+    transform.setView(*m_camera);
+
+    Shader shader = m_shaderManager->getResource(config.shaderName);
+    Mesh mesh = m_meshManager->getResource(config.meshName);
+
+    if (config.hasTexture) {
+        Texture texture = m_textureManager->getResource(config.textureName);
+        return std::make_unique<Object>(
+            config.name,
+            transform,
+            m_k,
+            shader,
+            mesh,
+            texture,
+            config.isStatic
+        );
+    } else {
+        return std::make_unique<Object>(
+            config.name,
+            transform,
+            m_k,
+            shader,
+            mesh,
+            std::nullopt,
+            config.isStatic
+        );
+    }
+}
+
+void Scene::loadSceneConfig(const std::string& configPath)
+{
+    std::ifstream configFile(configPath);
+    if (!configFile.is_open()) {
+        std::cerr << "Failed to open scene config: " << configPath << '\n';
+        return;
+    }
+
+    nlohmann::json sceneJson;
+    configFile >> sceneJson;
+    configFile.close();
+
+    std::vector<ObjectConfig> objectConfigs = parseObjectConfigs(sceneJson);
+
     Object::setVertexNormalShader(m_shaderManager->getResource("vertexNormal"));
     Object::setFaceNormalShader(m_shaderManager->getResource("faceNormal"));
 
-    Shader platformShader = m_shaderManager->getResource("platform");
-    Shader lightShader = m_shaderManager->getResource("light");
-    Shader dirtBlockShader = m_shaderManager->getResource("dirtblock");
-    Shader sphereShader = m_shaderManager->getResource("sphere");
+    for (const auto& config : objectConfigs) {
+        m_objects.push_back(createObject(config));
+    }
+}
 
-    Mesh cubeMesh = m_meshManager->getResource("cube");
-    Mesh sphereMesh = m_meshManager->getResource("sphere");
+std::vector<ObjectConfig> Scene::parseObjectConfigs(const nlohmann::json& sceneJson)
+{
+    std::vector<ObjectConfig> configs;
 
-    Texture dirtBlockTexture = m_textureManager->getResource("dirtblock");
-
-    // Platform definitions
-    struct PlatformDef {
-        std::string name;
-        glm::vec3 position;
-        glm::vec3 rotationAxis;
-        float rotationDeg;
-        glm::vec3 scale;
-    };
-
-    std::vector<PlatformDef> platforms = {
-        { "Platform", glm::vec3(0.0f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, glm::vec3(40.0f, 0.5f, 20.0f) },
-        { "Wall",     glm::vec3(0.0f, 1.0f, -20.5f), glm::vec3(1.0f, 0.0f, 0.0f), 90.0f, glm::vec3(40.0f, 0.5f, 2.0f) },
-        { "Wall",     glm::vec3(-40.5f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), 90.0f, glm::vec3(2.0f, 0.5f, 20.0f) },
-        { "Ramp",     glm::vec3(10.0f, 10.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), 30.0f, glm::vec3(15.0f, 0.5f, 6.0f) },
-        { "Ramp",     glm::vec3(-10.0f, 20.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), -30.0f, glm::vec3(15.0f, 0.5f, 6.0f) }
-    };
-
-    for (const auto& def : platforms)
-    {
-        Transform platformTransform;
-        platformTransform.setProjection(*m_camera);
-
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), def.position);
-        model = glm::rotate(model, glm::radians(def.rotationDeg), def.rotationAxis);
-        model = glm::scale(model, def.scale);
-
-        platformTransform.setModel(model);
-        platformTransform.setView(*m_camera);
-
-        auto platformBlock = std::make_unique<Object>(
-            def.name,
-            platformTransform,
-            m_k,
-            platformShader,
-            cubeMesh
+    const auto& objectsJson = sceneJson["scene"]["objects"];
+    for (const auto& objJson : objectsJson) {
+        ObjectConfig config;
+        config.name = objJson["name"];
+        config.position = glm::vec3(
+            objJson["position"][0],
+            objJson["position"][1],
+            objJson["position"][2]
         );
-        m_objects.push_back(std::move(platformBlock));
+        config.rotationAxis = glm::vec3(
+            objJson["rotationAxis"][0],
+            objJson["rotationAxis"][1],
+            objJson["rotationAxis"][2]
+        );
+        config.rotationDeg = objJson["rotationDeg"];
+        config.scale = glm::vec3(
+            objJson["scale"][0],
+            objJson["scale"][1],
+            objJson["scale"][2]
+        );
+        config.shaderName = objJson["shader"];
+        config.meshName = objJson["mesh"];
+        config.textureName = objJson["texture"];
+        config.isStatic = objJson["isStatic"];
+        config.hasTexture = objJson["hasTexture"];
+
+        configs.push_back(config);
     }
 
-    // // dirtBlock
-    // Transform dirtBlockTransform;
-    // dirtBlockTransform.setProjection(*m_camera);
-    // glm::vec3 dirtBlockPosition(-0.0f, 25.0f, 0.0f);
-    // glm::mat4 dirtBlockTranslationMatrix = glm::translate(
-    //     glm::mat4(1.0f),
-    //     dirtBlockPosition
-    // );
-    // dirtBlockTranslationMatrix = glm::rotate(
-    //     dirtBlockTranslationMatrix,
-    //     glm::radians(45.0f),
-    //     glm::vec3(0.0f, 1.0f, 1.0f)
-    // );
-    // dirtBlockTranslationMatrix = glm::scale(
-    //     dirtBlockTranslationMatrix,
-    //     glm::vec3(1.0f, 1.0f, 1.0f)
-    // );
-    // dirtBlockTransform.setModel(dirtBlockTranslationMatrix);
-    // dirtBlockTransform.setView(*m_camera);
-    // auto dirtBlock = std::make_unique<Object>(
-    //     "Block",
-    //     dirtBlockTransform,
-    //     m_k,
-    //     dirtBlockShader,
-    //     cubeMesh,
-    //     std::nullopt,
-    //     false
-    // );
-    // m_objects.push_back(std::move(dirtBlock));
-
-    // // Dirt block definitions
-    // struct DirtBlockDef {
-    //     std::string name;
-    //     glm::vec3 position;
-    //     glm::vec3 rotationAxis;
-    //     float rotationDeg;
-    //     glm::vec3 scale;
-    // };
-
-    // std::vector<DirtBlockDef> dirtBlocks = {
-    //     { "Block1", glm::vec3(-0.0f, 25.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f), 45.0f, glm::vec3(1.0f, 1.0f, 1.0f) },
-    //     { "Block2", glm::vec3(5.0f, 27.0f, 2.0f), glm::vec3(1.0f, 0.0f, 0.0f), 30.0f, glm::vec3(1.0f, 1.0f, 1.0f) },
-    //     { "Block3", glm::vec3(-3.0f, 23.0f, -4.0f), glm::vec3(0.0f, 0.0f, 1.0f), 60.0f, glm::vec3(1.0f, 1.0f, 1.0f) },
-    //     { "Block4", glm::vec3(8.0f, 26.0f, -3.0f), glm::vec3(0.0f, 1.0f, 0.0f), 15.0f, glm::vec3(1.0f, 1.0f, 1.0f) },
-    //     { "Block5", glm::vec3(-6.0f, 24.0f, 5.0f), glm::vec3(1.0f, 1.0f, 0.0f), 75.0f, glm::vec3(1.0f, 1.0f, 1.0f) }
-    // };
-
-    // for (const auto& def : dirtBlocks)
-    // {
-    //     Transform dirtBlockTransform;
-    //     dirtBlockTransform.setProjection(*m_camera);
-
-    //     glm::mat4 model = glm::translate(glm::mat4(1.0f), def.position);
-    //     model = glm::rotate(model, glm::radians(def.rotationDeg), def.rotationAxis);
-    //     model = glm::scale(model, def.scale);
-
-    //     dirtBlockTransform.setModel(model);
-    //     dirtBlockTransform.setView(*m_camera);
-
-    //     auto dirtBlock = std::make_unique<Object>(
-    //         def.name,
-    //         dirtBlockTransform,
-    //         m_k,
-    //         dirtBlockShader,
-    //         cubeMesh,
-    //         dirtBlockTexture,
-    //         false
-    //     );
-    //     m_objects.push_back(std::move(dirtBlock));
-    // }
-
-    // sphere
-    Transform sphereTransform;
-    sphereTransform.setProjection(*m_camera);
-    glm::vec3 spherePosition(-0.0f, 25.0f, 0.0f);
-    glm::mat4 sphereTranslationMatrix = glm::translate(
-        glm::mat4(1.0f),
-        spherePosition
-    );
-    sphereTranslationMatrix = glm::scale(
-        sphereTranslationMatrix,
-        glm::vec3(3.0f, 3.0f, 3.0f)
-    );
-    sphereTransform.setModel(sphereTranslationMatrix);
-    sphereTransform.setView(*m_camera);
-    auto sphere = std::make_unique<Object>(
-        "Sphere",
-        sphereTransform,
-        m_k,
-        sphereShader,
-        sphereMesh,
-        std::nullopt,
-        false
-    );
-    m_objects.push_back(std::move(sphere));
+    return configs;
 }
 
 void Scene::setupEnvCollisionConstraints()
@@ -174,16 +226,15 @@ void Scene::setupEnvCollisionConstraints()
 
 Scene::Scene(
     const std::string& name,
-    std::unique_ptr<ShaderManager> shaderManager,
-    std::unique_ptr<MeshManager> meshManager,
-    std::unique_ptr<TextureManager> textureManager,
-    std::unique_ptr<Camera> camera
+    GLFWwindow* window,
+    unsigned int screenWidth,
+    unsigned int screenHeight
 )
     :   m_name(name),
-        m_shaderManager(std::move(shaderManager)),
-        m_meshManager(std::move(meshManager)),
-        m_textureManager(std::move(textureManager)),
-        m_camera(std::move(camera)),
+        m_camera(createCamera(window, screenWidth, screenHeight)),
+        m_shaderManager(std::make_unique<ShaderManager>()),
+        m_meshManager(std::make_unique<MeshManager>()),
+        m_textureManager(std::make_unique<TextureManager>()),
         m_gravitationalAcceleration(0.0f),
         m_enableDistanceConstraints(true),
         m_enableVolumeConstraints(true),
@@ -193,9 +244,9 @@ Scene::Scene(
         m_beta(5.0f),
         m_k(1.0f)
 {
-    createObjects();
+    loadResources();
+    loadSceneConfig(CONFIG_PATH + "/test_scene.json");
     setupEnvCollisionConstraints();
-
     std::cout << name << " created.\n";
 }
 

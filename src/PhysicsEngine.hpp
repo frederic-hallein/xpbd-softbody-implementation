@@ -13,8 +13,8 @@ class PhysicsEngine
 public:
     PhysicsEngine(
         const char* engineName,
-        int screenWidth,
-        int screenHeight
+        const unsigned int screenWidth,
+        const unsigned int screenHeight
     );
 
     bool isRunning() const { return m_isRunning; }
@@ -24,8 +24,8 @@ public:
 
 private:
     bool m_isRunning = true;
-    int unsigned m_screenWidth;
-    int unsigned m_screenHeight;
+    const unsigned int m_screenWidth;
+    const unsigned int m_screenHeight;
     GLFWwindow* m_window;
 
     const int m_targetFPS = 60;
@@ -33,4 +33,7 @@ private:
 
     std::unique_ptr<DebugWindow> m_debugWindow;
     std::unique_ptr<Scene> m_scene;
+
+private:
+    static void framebufferSizeCallback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
 };

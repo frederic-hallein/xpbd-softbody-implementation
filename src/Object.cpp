@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Object.hpp"
 
 Object::Object(

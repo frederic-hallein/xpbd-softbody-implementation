@@ -1,3 +1,7 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 #include "Shader.hpp"
 
 static void checkCompileErrors(unsigned int shader, std::string type)

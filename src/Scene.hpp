@@ -3,6 +3,7 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -13,16 +14,28 @@
 #include "Camera.hpp"
 #include "Object.hpp"
 
+struct ObjectConfig
+{
+    std::string name;
+    glm::vec3 position;
+    glm::vec3 rotationAxis;
+    float rotationDeg;
+    glm::vec3 scale;
+    std::string shaderName;
+    std::string meshName;
+    std::string textureName;
+    bool isStatic;
+    bool hasTexture;
+};
 
 class Scene
 {
 public:
     Scene(
         const std::string& name,
-        std::unique_ptr<ShaderManager> shaderManager,
-        std::unique_ptr<MeshManager> meshManager,
-        std::unique_ptr<TextureManager> textureManager,
-        std::unique_ptr<Camera>
+        GLFWwindow* window,
+        unsigned int screenWidth,
+        unsigned int screenHeight
     );
 
     void update(float deltaTime);
@@ -69,7 +82,17 @@ public:
     float& getOverpressureFactor() { return m_k; }
 
 private:
-    void createObjects();
+    void loadResources();
+    std::unique_ptr<ShaderManager> loadShaders();
+    std::unique_ptr<MeshManager> loadMeshes();
+    std::unique_ptr<TextureManager> loadTextures();
+
+    std::unique_ptr<Camera> createCamera(GLFWwindow* window, unsigned int screenWidth, unsigned int screenHeight);
+
+    void loadSceneConfig(const std::string& configPath);
+    std::unique_ptr<Object> createObject(const ObjectConfig& config);
+    std::vector<ObjectConfig> parseObjectConfigs(const nlohmann::json& sceneJson);
+
     void setupEnvCollisionConstraints();
     void applyGravity(
         Object& object,
