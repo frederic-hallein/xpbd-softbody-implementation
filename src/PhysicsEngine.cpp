@@ -135,7 +135,6 @@ Camera* PhysicsEngine::getCurrentCamera()
     return scene->getCamera();
 }
 
-// Forward to ImGui first, then to Camera
 static void GlfwScrollDispatcher(GLFWwindow* window, double xoffset, double yoffset)
 {
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
@@ -239,29 +238,31 @@ void processInput(GLFWwindow* window)
         glfwSetWindowShouldClose(window, true);
 }
 
+void PhysicsEngine::update()
+{
+    processInput(m_window);
+    m_timer->startFrame();
+
+    Scene* currentScene = getCurrentScene();
+    if (currentScene) {
+        currentScene->update(m_timer->getDeltaTime());
+    }
+}
+
 void PhysicsEngine::render()
 {
-    while (!glfwWindowShouldClose(m_window))
-    {
-        processInput(m_window);
+    Scene* currentScene = getCurrentScene();
+    if (currentScene) {
+        currentScene->render();
 
-        m_timer->startFrame();
-
-        Scene* currentScene = getCurrentScene();
-        if (currentScene) {
-            currentScene->update(m_timer->getDeltaTime());
-            currentScene->render();
-
-            m_debugWindow->newFrame();
-            m_debugWindow->update(m_timer->frameDuration, *currentScene);
-            m_debugWindow->render();
-        }
-
-        glfwSwapBuffers(m_window);
-        glfwPollEvents();
-
-        m_timer->capFrameRate(m_targetFPS);
+        m_debugWindow->newFrame();
+        m_debugWindow->update(m_timer->frameDuration, *currentScene);
+        m_debugWindow->render();
     }
+
+    glfwSwapBuffers(m_window);
+    glfwPollEvents();
+    m_timer->capFrameRate(m_targetFPS);
 }
 
 void PhysicsEngine::close()

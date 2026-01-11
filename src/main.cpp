@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
         while (physicsEngine.isRunning())
         {
             physicsEngine.handleEvents();
+            physicsEngine.update();
             physicsEngine.render();
         }
 

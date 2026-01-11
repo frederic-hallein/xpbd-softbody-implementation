@@ -7,7 +7,6 @@
 Shader Object::s_vertexNormalShader;
 Shader Object::s_faceNormalShader;
 
-// const std::string RESOURCE_PATH = "../res/";
 
 std::unique_ptr<Camera> Scene::createCamera(GLFWwindow* window, unsigned int screenWidth, unsigned int screenHeight)
 {

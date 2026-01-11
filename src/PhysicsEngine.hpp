@@ -19,6 +19,7 @@ public:
 
     bool isRunning() const { return m_isRunning; }
     void handleEvents();
+    void update();
     void render();
     void close();
 
