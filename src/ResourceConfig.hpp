@@ -11,16 +11,18 @@ static constexpr std::array<std::pair<std::string_view, std::string_view>, 2> SC
 }};
 
 // Shader configuration
-static constexpr std::array<std::tuple<std::string_view, std::string_view, std::string_view>, 5> SHADER_DATA = {{
+static constexpr std::array<std::tuple<std::string_view, std::string_view, std::string_view>, 6> SHADER_DATA = {{
     {"vertexNormal", "vertexNormal.vsh", "vertexNormal.fsh"},
     {"faceNormal", "faceNormal.vsh", "faceNormal.fsh"},
+    {"ground", "ground.vsh", "ground.fsh"},
     {"platform", "platform.vsh", "platform.fsh"},
     {"dirtblock", "dirtblock.vsh", "dirtblock.fsh"},
     {"sphere", "sphere.vsh", "sphere.fsh"},
 }};
 
 // Mesh configuration
-static constexpr std::array<std::pair<std::string_view, std::string_view>, 2> MESH_DATA = {{
+static constexpr std::array<std::pair<std::string_view, std::string_view>, 3> MESH_DATA = {{
+    {"surface", "surface.obj"},
     {"cube", "cube.obj"},
     {"sphere", "sphere.obj"},
 }};

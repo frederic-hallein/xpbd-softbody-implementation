@@ -116,10 +116,12 @@ private:
         std::vector<glm::vec3>& gradC_j,
         std::span<const unsigned int> constraintVertices
     );
-    void applyPBD(
+    void applyXPBD(
         Object& object,
         float deltaTime
     );
+
+    void applyGroundCollision(Object& object);
 
 private:
     std::string m_name;
@@ -133,6 +135,7 @@ private:
     std::vector<std::unique_ptr<Object>> m_objects;
 
     glm::vec3 m_gravitationalAcceleration;
+    float m_groundLevel;
 
     int m_pbdSubsteps;
 

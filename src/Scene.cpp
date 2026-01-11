@@ -197,9 +197,10 @@ Scene::Scene(
         m_meshManager(meshManager),
         m_textureManager(textureManager),
         m_gravitationalAcceleration(0.0f, -0.0f, 0.0f),
+        m_groundLevel(0.0f),
         m_enableDistanceConstraints(true),
         m_enableVolumeConstraints(false),
-        m_enableEnvCollisionConstraints(true),
+        m_enableEnvCollisionConstraints(false),
         m_pbdSubsteps(10),
         m_alpha(0.001f),
         m_beta(5.0f),
@@ -404,7 +405,7 @@ void Scene::solveEnvCollisionConstraints(
     }
 }
 
-void Scene::applyPBD(
+void Scene::applyXPBD(
     Object& object,
     float deltaTime
 )
@@ -509,13 +510,30 @@ void Scene::applyPBD(
     }
 }
 
+void Scene::applyGroundCollision(Object& object)
+{
+    auto& vertexTransforms = object.getVertexTransforms();
+    for (auto& vertexTransform : vertexTransforms)
+    {
+        glm::vec3 pos = vertexTransform.getPosition();
+        if (pos.y < m_groundLevel)
+        {
+            pos.y = m_groundLevel;
+            vertexTransform.setPosition(pos);
+
+            glm::vec3 vel = vertexTransform.getVelocity();
+            if (vel.y < 0.0f) vel.y = 0.0f;
+            vertexTransform.setVelocity(vel);
+        }
+    }
+}
+
 void Scene::update(float deltaTime)
 {
     m_camera->setDeltaTime(deltaTime);
-    // m_camera->move();
 
-    // gravity and PBD
-    for (auto& object : m_objects)
+    // gravity, XPBD, and ground collision
+    for (const auto& object : m_objects)
     {
         Transform& transform = object->getTransform();
         transform.setView(*m_camera);
@@ -523,7 +541,8 @@ void Scene::update(float deltaTime)
         if (!object->isStatic())
         {
             applyGravity(*object, deltaTime);
-            applyPBD(*object, deltaTime);
+            applyXPBD(*object, deltaTime);
+            applyGroundCollision(*object);
         }
 
         object->update(deltaTime);
