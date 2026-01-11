@@ -217,10 +217,9 @@ PhysicsEngine::PhysicsEngine(
     // load resources
     loadResources();
 
-
     // create and select first scene
     createScenes();
-    switchScene("Test Scene 1"); // TODO : couple with ImGui
+    switchScene("Test Scene 2"); // TODO : couple with ImGui
 };
 
 void PhysicsEngine::handleEvents()
@@ -228,7 +227,7 @@ void PhysicsEngine::handleEvents()
     if (glfwWindowShouldClose(m_window))
     {
         m_isRunning = false;
-        logger::info("Closing {}", m_engineName);
+        logger::info("Closing {}...", m_engineName);
     }
 }
 

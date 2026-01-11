@@ -85,7 +85,7 @@ public:
     );
 
     glm::vec3& getGravitationalAcceleration() { return m_gravitationalAcceleration; }
-    int& getPBDSubsteps() { return m_pbdSubsteps; }
+    int& getXPBDSubsteps() { return m_xpbdSubsteps; }
     float& getAlpha() { return m_alpha; }
     float& getBeta()  { return m_beta;  }
     float& getOverpressureFactor() { return m_k; }
@@ -110,11 +110,22 @@ private:
         float alphaTilde,
         float gamma
     );
-    std::vector<glm::vec3> calculateDeltaX(
-        float lambda,
+    // std::vector<glm::vec3> calculateDeltaX(
+    //     float lambda,
+    //     const std::vector<float>& M,
+    //     std::vector<glm::vec3>& gradC_j,
+    //     std::span<const unsigned int> constraintVertices
+    // );
+    void setDeltaX(
+        std::vector<glm::vec3>& deltaX,
+        float deltaLambda,
         const std::vector<float>& M,
-        std::vector<glm::vec3>& gradC_j,
+        const std::vector<glm::vec3>& gradC_j,
         std::span<const unsigned int> constraintVertices
+    );
+    void updateConstraintPositions(
+        std::vector<glm::vec3>& x,
+        const std::vector<glm::vec3>& deltaX
     );
     void applyXPBD(
         Object& object,
@@ -137,7 +148,7 @@ private:
     glm::vec3 m_gravitationalAcceleration;
     float m_groundLevel;
 
-    int m_pbdSubsteps;
+    int m_xpbdSubsteps;
 
     bool m_enableDistanceConstraints;
     bool m_enableVolumeConstraints;

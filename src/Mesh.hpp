@@ -10,31 +10,10 @@
 #include <assimp/postprocess.h>
 #include <map>
 
+using Constraint = std::function<float(const std::vector<glm::vec3>&)>;
+using ConstraintGradient = std::function<std::vector<glm::vec3>(const std::vector<glm::vec3>&)>;
 
 class Object; // Forward declaration
-
-
-struct Vertex
-{
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 texCoords;
-};
-
-struct Edge
-{
-    unsigned int v1;
-    unsigned int v2;
-};
-
-struct Triangle
-{
-    unsigned int v1;
-    unsigned int v2;
-    unsigned int v3;
-};
-
-
 class Mesh
 {
 public:
@@ -60,22 +39,43 @@ public:
     void constructEnvCollisionConstraints();
 
 public:
+    struct Vertex
+    {
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 texCoords;
+    };
+
+    struct Edge
+    {
+        unsigned int v1;
+        unsigned int v2;
+    };
+
+    struct Triangle
+    {
+        unsigned int v1;
+        unsigned int v2;
+        unsigned int v3;
+    };
+
     std::vector<glm::vec3>& getPositions() { return m_positions; }
     const std::vector<Vertex>& getVertices() const { return m_vertices; }
 
     struct DistanceConstraints
     {
         std::vector<Edge> edges;
-        std::vector<std::function<float(const std::vector<glm::vec3>&)>> C;
-        std::vector<std::function<std::vector<glm::vec3>(const std::vector<glm::vec3>&)>> gradC;
+        std::vector<Constraint> C;
+        std::vector<ConstraintGradient> gradC;
+        std::vector<float> restLengths;
     };
     DistanceConstraints distanceConstraints;
 
     struct VolumeConstraints
     {
         std::vector<Triangle> triangles;
-        std::vector<std::function<float(const std::vector<glm::vec3>&)>> C;
-        std::vector<std::function<std::vector<glm::vec3>(const std::vector<glm::vec3>&)>> gradC;
+        std::vector<Constraint> C;
+        std::vector<ConstraintGradient> gradC;
     };
     VolumeConstraints volumeConstraints;
 
@@ -84,8 +84,8 @@ public:
     {
         std::vector<unsigned int> vertices;
         const Mesh* candidateMesh;
-        std::vector<std::function<float(const std::vector<glm::vec3>&)>> C;
-        std::vector<std::function<std::vector<glm::vec3>(const std::vector<glm::vec3>&)>> gradC;
+        std::vector<Constraint> C;
+        std::vector<ConstraintGradient> gradC;
         std::map<unsigned int, std::vector<size_t>> vertexToConstraints;
     };
     std::vector<EnvCollisionConstraints> perEnvCollisionConstraints;

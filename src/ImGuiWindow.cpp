@@ -113,9 +113,10 @@ void DebugWindow::displayExternalForces(Scene& scene)
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "External Forces");
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
     glm::vec3& gravitationalAcceleration = scene.getGravitationalAcceleration();
-    ImGui::Text("Gravity");
-    ImGui::SameLine();
+    ImGui::Text("Gravity:");
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
     ImGui::SliderFloat("##Gravity", &gravitationalAcceleration.y, -9.81f, 9.81f);
+    ImGui::PopItemWidth();
     ImGui::Separator();
 }
 
@@ -124,10 +125,19 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "XPBD");
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
-    int& pbdSubsteps = scene.getPBDSubsteps();
-    ImGui::Text("Substeps");
+    int& xpbdSubsteps = scene.getXPBDSubsteps();
+    ImGui::Text("Substeps:");
+    if (ImGui::Button("-")) {
+        if (xpbdSubsteps > 1) xpbdSubsteps--;
+    }
     ImGui::SameLine();
-    ImGui::SliderInt("##Substeps n", &pbdSubsteps, 1, 30);
+    if (ImGui::Button("+")) {
+        if (xpbdSubsteps < 30) xpbdSubsteps++;
+    }
+    ImGui::SameLine();
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
+    ImGui::SliderInt("##Substeps n", &xpbdSubsteps, 1, 30);
+    ImGui::PopItemWidth();
 
     bool& enableDistanceConstraints = scene.enableDistanceConstraints();
     ImGui::Checkbox("Enable Distance Constraints", &enableDistanceConstraints);
@@ -136,21 +146,23 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     ImGui::Checkbox("Enable Volume Constraints", &enableVolumeConstraints);
 
     bool& enableEnvCollisionConstraints = scene.enableEnvCollisionConstraints();
-    ImGui::Checkbox("Enable Env Collision Constraints", &enableEnvCollisionConstraints);
+    ImGui::Checkbox("Enable Collision Constraints", &enableEnvCollisionConstraints);
 
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
     float& alpha = scene.getAlpha();
-    ImGui::Text("alpha");
-    ImGui::SameLine();
-    ImGui::SliderFloat("##alpha", &alpha, 0.001f, 0.05f);
+    ImGui::Text("Compliance:");
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
+    ImGui::SliderFloat("##Compliance", &alpha, 0.0f, 0.1f);
+    ImGui::PopItemWidth();
 
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
     float& beta = scene.getBeta();
-    ImGui::Text("beta");
-    ImGui::SameLine();
-    ImGui::SliderFloat("##beta", &beta, 1.0f, 10.0f);
+    ImGui::Text("Damping:");
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
+    ImGui::SliderFloat("##Damping", &beta, 1.0f, 10.0f);
+    ImGui::PopItemWidth();
     ImGui::Separator();
 
     // float& k = scene.getOverpressureFactor();
@@ -250,6 +262,7 @@ void DebugWindow::update(
     Scene& scene
 )
 {
+    ImGui::SetNextWindowSizeConstraints(ImVec2(300, 0), ImVec2(FLT_MAX, FLT_MAX));
     ImGui::Begin("Debug");
 
     displayPerformance(frameDuration);

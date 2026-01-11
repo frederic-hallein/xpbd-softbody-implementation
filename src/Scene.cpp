@@ -13,7 +13,7 @@ std::unique_ptr<Camera> Scene::createCamera(GLFWwindow* window, unsigned int scr
     // TODO : pass as parameters
     float FOV = 45.0f;
     float nearPlane = 0.1f;
-    float farPlane = 150.0f;
+    float farPlane = 300.0f;
     float aspectRatio = static_cast<float>(screenWidth) / static_cast<float>(screenHeight);
 
     return std::make_unique<Camera>(
@@ -196,14 +196,14 @@ Scene::Scene(
         m_shaderManager(shaderManager),
         m_meshManager(meshManager),
         m_textureManager(textureManager),
-        m_gravitationalAcceleration(0.0f, -0.0f, 0.0f),
+        m_gravitationalAcceleration(0.0f, 0.0f, 0.0f),
         m_groundLevel(0.0f),
-        m_enableDistanceConstraints(true),
+        m_enableDistanceConstraints(false),
         m_enableVolumeConstraints(false),
         m_enableEnvCollisionConstraints(false),
-        m_pbdSubsteps(10),
-        m_alpha(0.001f),
-        m_beta(5.0f),
+        m_xpbdSubsteps(1),
+        m_alpha(0.0f),
+        m_beta(1.0f),
         m_k(1.0f)
 {
 }
@@ -244,23 +244,51 @@ float Scene::calculateDeltaLambda(
     return (-C_j - gamma * gradCPosDiff) / ((1 + gamma) * gradCMInverseGradCT + alphaTilde);
 }
 
-std::vector<glm::vec3> Scene::calculateDeltaX(
-    float lambda,
+// std::vector<glm::vec3> Scene::calculateDeltaX(
+//     float lambda,
+//     const std::vector<float>& M,
+//     std::vector<glm::vec3>& gradC_j,
+//     std::span<const unsigned int> constraintVertices
+// )
+// {
+//     std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
+//     size_t n = constraintVertices.size();
+//     for (size_t i = 0; i < n; ++i)
+//     {
+//         unsigned int v = constraintVertices[i];
+//         float w = 1.0f / M[v];
+//         deltaX[v] = lambda * w * gradC_j[i];
+//     }
+
+//     return deltaX;
+// }
+
+void Scene::setDeltaX(
+    std::vector<glm::vec3>& deltaX,
+    float deltaLambda,
     const std::vector<float>& M,
-    std::vector<glm::vec3>& gradC_j,
+    const std::vector<glm::vec3>& gradC_j,
     std::span<const unsigned int> constraintVertices
 )
 {
-    std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
+    std::fill(deltaX.begin(), deltaX.end(), glm::vec3(0.0f));
     size_t n = constraintVertices.size();
     for (size_t i = 0; i < n; ++i)
     {
         unsigned int v = constraintVertices[i];
         float w = 1.0f / M[v];
-        deltaX[v] = lambda * w * gradC_j[i];
+        deltaX[v] = deltaLambda * w * gradC_j[i];
     }
+}
 
-    return deltaX;
+void Scene::updateConstraintPositions(
+    std::vector<glm::vec3>& x,
+    const std::vector<glm::vec3>& deltaX
+)
+{
+    for (size_t k = 0; k < deltaX.size(); ++k) {
+        x[k] += deltaX[k];
+    }
 }
 
 void Scene::solveDistanceConstraints(
@@ -275,7 +303,7 @@ void Scene::solveDistanceConstraints(
     size_t edgesSize = distanceConstraints.edges.size();
     size_t CSize = distanceConstraints.C.size();
     size_t gradCSize = distanceConstraints.gradC.size();
-    if (edgesSize != gradCSize)
+    if (edgesSize != CSize && edgesSize != gradCSize)
     {
         logger::error("DistanceConstraints size mismatch:");
         logger::error("constraints = {},", CSize);
@@ -284,23 +312,17 @@ void Scene::solveDistanceConstraints(
         return;
     }
 
+    std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
     for (size_t j = 0; j < distanceConstraints.edges.size(); ++j)
     {
         float C_j = distanceConstraints.C[j](x);
         std::vector<glm::vec3> gradC_j = distanceConstraints.gradC[j](x);
-        const Edge& edge = distanceConstraints.edges[j];
+        const auto& edge = distanceConstraints.edges[j];
         const std::array<unsigned int, 2> constraintVertices = { edge.v1, edge.v2 };
 
         float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
-        std::vector<glm::vec3> deltaX = calculateDeltaX(deltaLambda, M, gradC_j, constraintVertices);
-
-        {
-            for (size_t k = 0; k < deltaX.size(); ++k)
-            {
-                x[k] += deltaX[k];
-            }
-        }
-
+        setDeltaX(deltaX, deltaLambda, M, gradC_j, constraintVertices);
+        updateConstraintPositions(x, deltaX);
     }
 }
 
@@ -313,33 +335,33 @@ void Scene::solveVolumeConstraints(
     const Mesh::VolumeConstraints& volumeConstraints
 )
 {
-    size_t trianglesSize = volumeConstraints.triangles.size();
-    size_t CSize = volumeConstraints.C.size();
-    size_t gradCSize = volumeConstraints.gradC.size();
-    if (trianglesSize != gradCSize)
-    {
-        logger::error("VolumeConstraints size mismatch:");
-        logger::error("constraints = {},", CSize);
-        logger::error("gradConstraints = {}", gradCSize);
-        logger::error("triangleVertices = {}", trianglesSize);
-        return;
-    }
+    // size_t trianglesSize = volumeConstraints.triangles.size();
+    // size_t CSize = volumeConstraints.C.size();
+    // size_t gradCSize = volumeConstraints.gradC.size();
+    // if (trianglesSize != gradCSize)
+    // {
+    //     logger::error("VolumeConstraints size mismatch:");
+    //     logger::error("constraints = {},", CSize);
+    //     logger::error("gradConstraints = {}", gradCSize);
+    //     logger::error("triangleVertices = {}", trianglesSize);
+    //     return;
+    // }
 
-    for (size_t j = 0; j < volumeConstraints.triangles.size(); ++j)
-    {
-        float C_j = volumeConstraints.C[0](x);
-        std::vector<glm::vec3> gradC_j = volumeConstraints.gradC[j](x);
-        const Triangle& tri = volumeConstraints.triangles[j];
-        const std::array<unsigned int, 3> constraintVertices = { tri.v1, tri.v2, tri.v3 };
+    // for (size_t j = 0; j < volumeConstraints.triangles.size(); ++j)
+    // {
+    //     float C_j = volumeConstraints.C[0](x);
+    //     std::vector<glm::vec3> gradC_j = volumeConstraints.gradC[j](x);
+    //     const auto& tri = volumeConstraints.triangles[j];
+    //     const std::array<unsigned int, 3> constraintVertices = { tri.v1, tri.v2, tri.v3 };
 
-        float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
-        std::vector<glm::vec3> deltaX = calculateDeltaX(deltaLambda, M, gradC_j, constraintVertices);
+    //     float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
+    //     std::vector<glm::vec3> deltaX = calculateDeltaX(deltaLambda, M, gradC_j, constraintVertices);
 
-        for (size_t k = 0; k < deltaX.size(); ++k)
-        {
-            x[k] += deltaX[k];
-        }
-    }
+    //     for (size_t k = 0; k < deltaX.size(); ++k)
+    //     {
+    //         x[k] += deltaX[k];
+    //     }
+    // }
 }
 
 void Scene::solveEnvCollisionConstraints(
@@ -351,58 +373,58 @@ void Scene::solveEnvCollisionConstraints(
     std::vector<Mesh::EnvCollisionConstraints> perEnvCollisionConstraints
 )
 {
-    for (size_t setIdx = 0; setIdx < perEnvCollisionConstraints.size(); ++setIdx)
-    {
-        const auto& constraints = perEnvCollisionConstraints[setIdx];
-        size_t verticesSize = constraints.vertices.size();
-        size_t CSize = constraints.C.size();
-        size_t gradCSize = constraints.gradC.size();
+    // for (size_t setIdx = 0; setIdx < perEnvCollisionConstraints.size(); ++setIdx)
+    // {
+    //     const auto& constraints = perEnvCollisionConstraints[setIdx];
+    //     size_t verticesSize = constraints.vertices.size();
+    //     size_t CSize = constraints.C.size();
+    //     size_t gradCSize = constraints.gradC.size();
 
-        if (verticesSize != gradCSize)
-        {
-            logger::error("EnvCollisionConstraints size mismatch in set {}", setIdx);
-            continue;
-        }
+    //     if (verticesSize != gradCSize)
+    //     {
+    //         logger::error("EnvCollisionConstraints size mismatch in set {}", setIdx);
+    //         continue;
+    //     }
 
-        for (const auto& [vertex, constraintIndices] : constraints.vertexToConstraints)
-        {
-            bool allNegative = true;
-            float maxNegativeC = -std::numeric_limits<float>::max(); // Initialize to most negative possible value
-            size_t maxIdx = 0;
-            for (size_t idx : constraintIndices)
-            {
-                float C_j = constraints.C[idx](x);
-                if (C_j >= 0.0f)
-                {
-                    allNegative = false;
-                }
+    //     for (const auto& [vertex, constraintIndices] : constraints.vertexToConstraints)
+    //     {
+    //         bool allNegative = true;
+    //         float maxNegativeC = -std::numeric_limits<float>::max(); // Initialize to most negative possible value
+    //         size_t maxIdx = 0;
+    //         for (size_t idx : constraintIndices)
+    //         {
+    //             float C_j = constraints.C[idx](x);
+    //             if (C_j >= 0.0f)
+    //             {
+    //                 allNegative = false;
+    //             }
 
-                // Track the constraint with biggest negative value
-                if (C_j < 0.0f && C_j > maxNegativeC)
-                {
-                    maxNegativeC = C_j;
-                    maxIdx = idx;
-                }
-            }
+    //             // Track the constraint with biggest negative value
+    //             if (C_j < 0.0f && C_j > maxNegativeC)
+    //             {
+    //                 maxNegativeC = C_j;
+    //                 maxIdx = idx;
+    //             }
+    //         }
 
-            // If all constraints are negative, we have a collision with this vertex
-            if (allNegative && !constraintIndices.empty())
-            {
-                float C_j = maxNegativeC;
-                std::vector<glm::vec3> gradC_j = constraints.gradC[maxIdx](x);
+    //         // If all constraints are negative, we have a collision with this vertex
+    //         if (allNegative && !constraintIndices.empty())
+    //         {
+    //             float C_j = maxNegativeC;
+    //             std::vector<glm::vec3> gradC_j = constraints.gradC[maxIdx](x);
 
-                std::array<unsigned int, 1> constraintVertices = { vertex };
+    //             std::array<unsigned int, 1> constraintVertices = { vertex };
 
-                float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
-                std::vector<glm::vec3> deltaX = calculateDeltaX(deltaLambda, M, gradC_j, constraintVertices);
+    //             float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
+    //             std::vector<glm::vec3> deltaX = calculateDeltaX(deltaLambda, M, gradC_j, constraintVertices);
 
-                for (size_t k = 0; k < deltaX.size(); ++k)
-                {
-                    x[k] += deltaX[k];
-                }
-            }
-        }
-    }
+    //             for (size_t k = 0; k < deltaX.size(); ++k)
+    //             {
+    //                 x[k] += deltaX[k];
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 void Scene::applyXPBD(
@@ -419,39 +441,33 @@ void Scene::applyXPBD(
     const size_t numVerts = vertexTransforms.size();
 
     std::vector<float> M = object.getMass();
-    std::vector<glm::vec3> x(numVerts, glm::vec3(0.0f));
-    std::vector<glm::vec3> v(numVerts, glm::vec3(0.0f));
-    std::vector<glm::vec3> a(numVerts, glm::vec3(0.0f));
-    std::vector<glm::vec3> p(numVerts, glm::vec3(0.0f));
-    std::vector<glm::vec3> posDiff(numVerts, glm::vec3(0.0f));
-    std::vector<glm::vec3> deltaX(numVerts, glm::vec3(0.0f));
+    std::vector<glm::vec3> x(numVerts);
+    std::vector<glm::vec3> v(numVerts);
+    std::vector<glm::vec3> p(numVerts);
+    std::vector<glm::vec3> posDiff(numVerts);
 
     int subStep = 1;
-    const int n = m_pbdSubsteps;
+    const int n = m_xpbdSubsteps;
     float deltaTime_s = deltaTime / static_cast<float>(n);
 
-    float alphaTilde;
-    float betaTilde;
-    float gamma;
+    float alphaTilde = m_enableDistanceConstraints ? m_alpha / (deltaTime_s * deltaTime_s) : 0.0f;
+    float betaTilde = m_enableDistanceConstraints ? (deltaTime_s * deltaTime_s) * m_beta : 0.0f;
+    float gamma = m_enableDistanceConstraints ? (alphaTilde * betaTilde) / deltaTime_s : 0.0f;
 
     while (subStep < n + 1)
     {
         for (size_t i = 0; i < numVerts; ++i)
         {
-            const Transform& vertexTransform = vertexTransforms[i];
-            a[i] = vertexTransform.getAcceleration();
-            v[i] = vertexTransform.getVelocity() + deltaTime_s * a[i];
-            x[i] = vertexTransform.getPosition() + deltaTime_s * v[i];
-            p[i] = vertexTransform.getPosition();
+            const Transform& vt = vertexTransforms[i];
+            p[i] = vt.getPosition();
+            v[i] = vt.getVelocity() + deltaTime_s * vt.getAcceleration();
+            x[i] = p[i] + deltaTime_s * v[i];
             posDiff[i] = x[i] - p[i];
         }
 
         // Environment Collision constraints
         if (m_enableEnvCollisionConstraints)
         {
-            alphaTilde = 0.0f;
-            betaTilde = 0.0f;
-            gamma = 0.0f;
             solveEnvCollisionConstraints(
                 x,
                 posDiff,
@@ -465,9 +481,6 @@ void Scene::applyXPBD(
         // Distance constraints
         if (m_enableDistanceConstraints)
         {
-            alphaTilde = m_alpha / (deltaTime_s * deltaTime_s);
-            betaTilde = (deltaTime_s * deltaTime_s) * m_beta;
-            gamma = (alphaTilde * betaTilde) / deltaTime_s;
             solveDistanceConstraints(
                 x,
                 posDiff,
@@ -481,9 +494,6 @@ void Scene::applyXPBD(
         // Volume constraints
         if (m_enableVolumeConstraints)
         {
-            alphaTilde = m_alpha / (deltaTime_s * deltaTime_s);
-            betaTilde = (deltaTime_s * deltaTime_s) * m_beta;
-            gamma = (alphaTilde * betaTilde) / deltaTime_s;
             solveVolumeConstraints(
                 x,
                 posDiff,
@@ -497,13 +507,10 @@ void Scene::applyXPBD(
         // Update positions and velocities
         for (size_t i = 0; i < numVerts; ++i)
         {
-            Transform& vertexTransform = vertexTransforms[i];
-
-            glm::vec3 newX = x[i];
-            glm::vec3 newV = (newX - p[i]) / deltaTime_s;
-
-            vertexTransform.setPosition(newX);
-            vertexTransform.setVelocity(newV);
+            Transform& vt = vertexTransforms[i];
+            glm::vec3 newV = (x[i] - p[i]) / deltaTime_s;
+            vt.setPosition(x[i]);
+            vt.setVelocity(newV);
         }
 
         subStep++;

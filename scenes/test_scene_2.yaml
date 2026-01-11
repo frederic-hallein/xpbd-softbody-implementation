@@ -1,15 +1,15 @@
 scene:
   name: Test Scene 2
   objects:
-    # Ground platform
-    - name: Platform
-      position: [0.0, -0.5, 0.0]
+    # Ground
+    - name: Surface
+      position: [0.0, 0.0, 0.0]
       rotationAxis: [0.0, 0.0, 1.0]
-      rotationDeg: 0.0
-      scale: [20.0, 0.5, 20.0]
-      shader: platform
-      mesh: cube
-      texture: ""
+      rotationDeg: 180.0
+      scale: [50.0, 1.0, 50.0]
+      shader: ground
+      mesh: surface
+      texture: checkerboard
       isStatic: true
 
     # Sphere
@@ -17,6 +17,87 @@ scene:
       position: [0.0, 15.0, 0.0]
       rotationAxis: [0.0, 1.0, 1.0]
       rotationDeg: 45.0
+      scale: [2.0, 2.0, 2.0]
+      shader: sphere
+      mesh: sphere
+      texture: ""
+      isStatic: false
+
+    # Additional spheres
+    - name: Sphere
+      position: [5.2, 12.3, -3.8]
+      rotationAxis: [0.0, 1.0, 0.0]
+      rotationDeg: 30.0
+      scale: [1.5, 1.5, 1.5]
+      shader: sphere
+      mesh: sphere
+      texture: ""
+      isStatic: false
+
+    - name: Sphere
+      position: [-7.1, 18.0, 4.5]
+      rotationAxis: [1.0, 0.0, 0.0]
+      rotationDeg: 60.0
+      scale: [2.8, 2.8, 2.8]
+      shader: sphere
+      mesh: sphere
+      texture: ""
+      isStatic: false
+
+    - name: Sphere
+      position: [3.6, 10.5, -9.2]
+      rotationAxis: [0.0, 0.0, 1.0]
+      rotationDeg: 15.0
+      scale: [1.2, 1.2, 1.2]
+      shader: sphere
+      mesh: sphere
+      texture: ""
+      isStatic: false
+
+    - name: Sphere
+      position: [-4.4, 14.7, 6.9]
+      rotationAxis: [1.0, 1.0, 0.0]
+      rotationDeg: 75.0
+      scale: [2.2, 2.2, 2.2]
+      shader: sphere
+      mesh: sphere
+      texture: ""
+      isStatic: false
+
+    - name: Sphere
+      position: [8.0, 16.9, -5.7]
+      rotationAxis: [0.0, 1.0, 1.0]
+      rotationDeg: 90.0
+      scale: [3.0, 3.0, 3.0]
+      shader: sphere
+      mesh: sphere
+      texture: ""
+      isStatic: false
+
+    - name: Sphere
+      position: [-9.3, 13.2, 2.1]
+      rotationAxis: [1.0, 0.0, 1.0]
+      rotationDeg: 120.0
+      scale: [2.5, 2.5, 2.5]
+      shader: sphere
+      mesh: sphere
+      texture: ""
+      isStatic: false
+
+    - name: Sphere
+      position: [6.4, 19.5, -2.6]
+      rotationAxis: [0.0, 1.0, 0.0]
+      rotationDeg: 50.0
+      scale: [1.8, 1.8, 1.8]
+      shader: sphere
+      mesh: sphere
+      texture: ""
+      isStatic: false
+
+    - name: Sphere
+      position: [-2.7, 11.8, 7.4]
+      rotationAxis: [1.0, 1.0, 1.0]
+      rotationDeg: 100.0
       scale: [2.0, 2.0, 2.0]
       shader: sphere
       mesh: sphere

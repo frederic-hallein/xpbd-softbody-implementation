@@ -1,7 +1,7 @@
 scene:
   name: Test Scene 1
   objects:
-    # # Ground platform
+    # # Platform
     # - name: Platform
     #   position: [0.0, -0.5, 0.0]
     #   rotationAxis: [0.0, 0.0, 1.0]
@@ -12,6 +12,7 @@ scene:
     #   texture: ""
     #   isStatic: true
 
+    # Ground
     - name: Surface
       position: [0.0, 0.0, 0.0]
       rotationAxis: [0.0, 0.0, 1.0]

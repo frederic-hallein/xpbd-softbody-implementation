@@ -1,6 +1,6 @@
-#include <iostream>
 #include <set>
 
+#include "logger.hpp"
 #include "Object.hpp"
 #include "Mesh.hpp"
 
@@ -65,7 +65,7 @@ void Mesh::constructIndices(const aiMesh* mesh)
     }
 }
 
-std::vector<Triangle> Mesh::constructTriangles()
+std::vector<Mesh::Triangle> Mesh::constructTriangles()
 {
     std::vector<Triangle> triangles;
     triangles.reserve(m_indices.size() / 3);
@@ -210,7 +210,7 @@ void Mesh::loadObjData(const std::string& filePath)
 
     if (!scene || !scene->HasMeshes())
     {
-        std::cerr << "ASSIMP: Failed to load mesh: " << filePath << std::endl;
+        logger::error("ASSIMP: Failed to load mesh: {}", filePath);
         return;
     }
 
@@ -252,6 +252,8 @@ void Mesh::constructDistanceConstraints()
         distanceConstraints.C.push_back([=](const std::vector<glm::vec3>& x) -> float {
             return glm::distance(x[v1], x[v2]) - d_0;
         });
+
+        distanceConstraints.restLengths.push_back(d_0);
 
         distanceConstraints.gradC.push_back([=](const std::vector<glm::vec3>& x) -> std::vector<glm::vec3> {
             glm::vec3 n = (x[v1] - x[v2]) / glm::distance(x[v1], x[v2]);
