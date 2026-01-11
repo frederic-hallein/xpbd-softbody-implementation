@@ -1,4 +1,3 @@
-#include <thread>
 #include <future>
 #include <fstream>
 #include <yaml-cpp/yaml.h>
@@ -207,6 +206,10 @@ Scene::Scene(
         m_alpha(0.0f),
         m_beta(1.0f),
         m_k(1.0f)
+{
+}
+
+Scene::~Scene()
 {
 }
 

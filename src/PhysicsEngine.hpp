@@ -16,6 +16,7 @@ public:
         const unsigned int screenWidth,
         const unsigned int screenHeight
     );
+    ~PhysicsEngine();
 
     bool isRunning() const { return m_isRunning; }
     void handleEvents();

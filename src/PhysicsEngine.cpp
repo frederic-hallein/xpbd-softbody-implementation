@@ -222,6 +222,10 @@ PhysicsEngine::PhysicsEngine(
     switchScene("Test Scene 2"); // TODO : couple with ImGui
 };
 
+PhysicsEngine::~PhysicsEngine()
+{
+}
+
 void PhysicsEngine::handleEvents()
 {
     if (glfwWindowShouldClose(m_window))

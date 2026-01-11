@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <span>
 #include <string>
 #include <vector>
@@ -43,6 +44,7 @@ public:
         MeshManager* meshManager,
         TextureManager* textureManager
     );
+    ~Scene();
 
     void loadSceneConfig(const std::string& configPath);
 
