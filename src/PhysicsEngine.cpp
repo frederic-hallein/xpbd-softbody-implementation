@@ -85,6 +85,12 @@ Camera* PhysicsEngine::getCurrentCamera()
     return scene->getCamera();
 }
 
+void PhysicsEngine::switchScene(const std::string& sceneName)
+{
+    m_sceneManager->switchScene(sceneName);
+    setupCameraCallbacks();
+}
+
 static void GlfwScrollDispatcher(GLFWwindow* window, double xoffset, double yoffset)
 {
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
@@ -181,8 +187,8 @@ PhysicsEngine::PhysicsEngine(
 
     // create and select first scene
     m_sceneManager->createScenes();
-    m_sceneManager->switchScene("Test Scene 1");
-    setupCameraCallbacks();
+    switchScene(std::string(SCENE_LIST[1].first));
+
 };
 
 PhysicsEngine::~PhysicsEngine()
@@ -222,7 +228,7 @@ void PhysicsEngine::render()
         currentScene->render();
 
         m_debugWindow->newFrame();
-        m_debugWindow->update(m_timer->frameDuration, *currentScene);
+        m_debugWindow->update(m_timer->frameDuration, *currentScene, *m_sceneManager);
         m_debugWindow->render();
     }
 

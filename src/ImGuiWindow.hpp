@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "Scene.hpp"
-// #include "SceneManager.hpp"
+#include "SceneManager.hpp"
 
 class ImGuiWindow
 {
@@ -30,10 +30,12 @@ public:
 
     void update(
         int frameDuration,
-        Scene& scene
+        Scene& scene,
+        SceneManager& sceneManager
     );
 
 private:
+    void displaySceneSelector(SceneManager& sceneManager);
     void displayPerformance(int frameDuration);
     void displayCamera(Camera* camera);
     void displayExternalForces(Scene& scene);

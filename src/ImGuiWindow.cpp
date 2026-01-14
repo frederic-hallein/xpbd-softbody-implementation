@@ -2,6 +2,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
+#include "SceneManager.hpp"
 #include "logger.hpp"
 #include "ImGuiWindow.hpp"
 
@@ -47,6 +48,35 @@ DebugWindow::DebugWindow(
 )
     : ImGuiWindow(window, glslVersion)
 {
+}
+
+void DebugWindow::displaySceneSelector(SceneManager& sceneManager)
+{
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Scene Selection");
+    ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
+    const auto& scenes = sceneManager.getAllScenes();
+    const std::string& currentScene = sceneManager.getCurrentSceneName();
+
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
+    if (ImGui::BeginCombo("##SceneCombo", currentScene.c_str()))
+    {
+        for (const auto& [sceneName, scene] : scenes)
+        {
+            bool isSelected = (currentScene == sceneName);
+            if (ImGui::Selectable(sceneName.c_str(), isSelected))
+            {
+                sceneManager.switchScene(sceneName);
+            }
+            if (isSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::PopItemWidth();
+    ImGui::Separator();
 }
 
 void DebugWindow::displayPerformance(int frameDuration)
@@ -266,12 +296,14 @@ void DebugWindow::displaySceneObjects(Scene& scene)
 
 void DebugWindow::update(
     int frameDuration,
-    Scene& scene
+    Scene& scene,
+    SceneManager& sceneManager
 )
 {
     ImGui::SetNextWindowSizeConstraints(ImVec2(300, 0), ImVec2(FLT_MAX, FLT_MAX));
     ImGui::Begin("Debug");
 
+    displaySceneSelector(sceneManager);
     displayPerformance(frameDuration);
     displayCamera(scene.getCamera());
     displayExternalForces(scene);
