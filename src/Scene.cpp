@@ -580,11 +580,11 @@ void Scene::render()
 
 void Scene::clear()
 {
-    logger::info("Clearing {}...", m_name);
+    logger::info(" - Clearing '{}' scene...", m_name);
     m_textureManager->deleteAllResources();
     m_meshManager->deleteAllResources();
     m_shaderManager->deleteAllResources();
     m_objects.clear();
 
-    logger::info("{} cleared successfully", m_name);
+    logger::info(" - Cleared '{}' scene successfully", m_name);
 }

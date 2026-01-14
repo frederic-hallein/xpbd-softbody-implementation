@@ -4,11 +4,11 @@
 #include <glm/glm.hpp>
 
 #include "Scene.hpp"
+// #include "SceneManager.hpp"
 
 class ImGuiWindow
 {
 public:
-    ImGuiWindow() = default;
     ImGuiWindow(
         GLFWwindow* window,
         const char* glslVersion
@@ -18,15 +18,11 @@ public:
     void update();
     void render();
     void close();
-
-private:
-
 };
 
 class DebugWindow : public ImGuiWindow
 {
 public:
-    DebugWindow() = default;
     DebugWindow(
         GLFWwindow* window,
         const char* glslVersion
@@ -51,3 +47,21 @@ private:
 private:
     std::deque<float> m_fpsHistory;
 };
+
+// class SceneSelector : public ImGuiWindow
+// {
+// public:
+//     SceneSelector() = default;
+//     SceneSelector(
+//         GLFWwindow* window,
+//         const char* glslVersion
+//     );
+
+//     void update(SceneManager& sceneManager);
+
+// private:
+//     void displaySceneSelector(SceneManager& sceneManager);
+
+// private:
+//     std::string m_selectedScene;
+// };

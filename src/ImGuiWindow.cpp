@@ -151,25 +151,31 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
     float& alpha = scene.getAlpha();
+    float alpha_max = 0.1f;
     ImGui::Text("Compliance:");
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    ImGui::SliderFloat("##Compliance", &alpha, 0.001, 0.1f);
+    ImGui::SliderFloat("##Compliance", &alpha, 0.0, alpha_max);
     ImGui::PopItemWidth();
 
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
     float& beta = scene.getBeta();
+    float beta_max = 10.0f;
     ImGui::Text("Damping:");
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    ImGui::SliderFloat("##Damping", &beta, 1.0f, 10.0f);
+    ImGui::SliderFloat("##Damping", &beta, 1.0f, beta_max);
     ImGui::PopItemWidth();
     ImGui::Separator();
 
     float& k = scene.getOverpressureFactor();
-    ImGui::Text("Overpressure:");
+    float k_max = 10.0f;
+    ImGui::SameLine();
+    if (ImGui::Button("Reset")) {
+        k = 1.0f;
+    }
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    ImGui::SliderFloat("##k", &k, 1e-6f, 10.0f);
-
+    ImGui::SliderFloat("##k", &k, 0.0f, k_max);
+    ImGui::PopItemWidth();
     ImGui::Separator();
 }
 

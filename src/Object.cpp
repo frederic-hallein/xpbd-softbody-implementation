@@ -62,7 +62,7 @@ Object::Object(
 
 Object::~Object()
 {
-    logger::info("- Destroyed {} successfully", m_name);
+    logger::info("  - Destroyed '{}' object successfully", m_name);
 }
 
 void Object::update(float deltaTime)

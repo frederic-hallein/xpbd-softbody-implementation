@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assimp/mesh.h>
 #include <string>
 #include <vector>
 #include <functional>
@@ -100,7 +101,7 @@ private:
 
     std::vector<glm::vec3> calculateFaceNormals();
 
-    void constructDistanceConstraintVertices();
+    void constructDistanceConstraintVertices(const aiMesh* mesh);
     void constructVolumeConstraintVertices(const aiMesh* mesh);
     void constructEnvCollisionConstraintVertices();
 

@@ -4,8 +4,8 @@
 #include "ResourceConfig.hpp"
 #include "PhysicsEngine.hpp"
 
-const std::string SCENES_PATH = "../scenes/";
 const std::string RESOURCE_PATH = "../res/";
+
 
 
 std::unique_ptr<ShaderManager> PhysicsEngine::loadShaders()
@@ -78,59 +78,9 @@ void PhysicsEngine::loadResources()
     logger::info("Loaded resources successfully");
 }
 
-void PhysicsEngine::createScene(const std::string& sceneName, const std::string& sceneFilename)
-{
-    const std::string scenePath = "../scenes/" + sceneFilename;
-    try {
-        m_scenes[sceneName] = std::make_unique<Scene>(
-            m_window,
-            m_screenWidth,
-            m_screenHeight,
-            m_shaderManager.get(),
-            m_meshManager.get(),
-            m_textureManager.get()
-        );
-        m_scenes[sceneName]->loadSceneConfig(scenePath);
-        logger::info(" - Created '{}' scene successfully", sceneName);
-    } catch (const std::exception& e) {
-        logger::error("Failed to load scene '{}': {}", sceneName, e.what());
-    }
-}
-
-void PhysicsEngine::createScenes()
-{
-    logger::info("Creating scenes...");
-    for (const auto& [sceneName, sceneFilename] : SCENE_LIST) {
-        createScene(std::string(sceneName), std::string(sceneFilename));
-    }
-}
-
-void PhysicsEngine::switchScene(const std::string& sceneName)
-{
-    auto it = m_scenes.find(sceneName);
-    if (it == m_scenes.end()) {
-        logger::error("Scene '{}' not found", sceneName); // TODO : better handle scene not found error
-        return;
-    }
-
-    m_currentSceneName = sceneName;
-    setupCameraCallbacks();
-    logger::info("Switched to scene: {}", sceneName);
-}
-
-
-Scene* PhysicsEngine::getCurrentScene()
-{
-    auto it = m_scenes.find(m_currentSceneName);
-    if (it == m_scenes.end()) {
-        return nullptr;
-    }
-    return it->second.get();
-}
-
 Camera* PhysicsEngine::getCurrentCamera()
 {
-    Scene* scene = getCurrentScene();
+    Scene* scene = m_sceneManager->getCurrentScene();
     if (!scene) return nullptr;
     return scene->getCamera();
 }
@@ -213,14 +163,26 @@ PhysicsEngine::PhysicsEngine(
     glfwSetFramebufferSizeCallback(m_window, framebufferSizeCallback);
 
     // create debug window
-    m_debugWindow = std::make_unique<DebugWindow>(m_window, "#version 330");
+    const char* glslVersion = "#version 330";
+    m_debugWindow = std::make_unique<DebugWindow>(m_window, glslVersion);
 
     // load resources
     loadResources();
 
+    // create scene manager
+    m_sceneManager = std::make_unique<SceneManager>(
+        m_window,
+        screenWidth,
+        screenHeight,
+        m_shaderManager.get(),
+        m_meshManager.get(),
+        m_textureManager.get()
+    );
+
     // create and select first scene
-    createScenes();
-    switchScene("Test Scene 1"); // TODO : couple with ImGui
+    m_sceneManager->createScenes();
+    m_sceneManager->switchScene("Test Scene 1");
+    setupCameraCallbacks();
 };
 
 PhysicsEngine::~PhysicsEngine()
@@ -247,7 +209,7 @@ void PhysicsEngine::update()
     processInput(m_window);
     m_timer->startFrame();
 
-    Scene* currentScene = getCurrentScene();
+    Scene* currentScene = m_sceneManager->getCurrentScene();
     if (currentScene) {
         currentScene->update(m_timer->getDeltaTime());
     }
@@ -255,7 +217,7 @@ void PhysicsEngine::update()
 
 void PhysicsEngine::render()
 {
-    Scene* currentScene = getCurrentScene();
+    Scene* currentScene = m_sceneManager->getCurrentScene();
     if (currentScene) {
         currentScene->render();
 
@@ -272,9 +234,8 @@ void PhysicsEngine::render()
 void PhysicsEngine::close()
 {
     m_debugWindow->close();
-    for (auto& [name, scene] : m_scenes) {
-        scene->clear();
-    }
+    m_sceneManager->clearScenes();
+
     glfwTerminate();
 
     logger::info("{} closed successfully", m_engineName);

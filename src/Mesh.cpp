@@ -102,8 +102,7 @@ std::vector<glm::vec3> Mesh::calculateFaceNormals()
     return faceNormals;
 }
 
-// TODO : refactor to make it more simple and maybe use mesh parameter
-void Mesh::constructDistanceConstraintVertices()
+void Mesh::constructDistanceConstraintVertices(const aiMesh* mesh)
 {
     struct UniqueEdge
     {
@@ -122,21 +121,20 @@ void Mesh::constructDistanceConstraintVertices()
     };
 
     std::set<UniqueEdge> uniqueEdges;
-    for (size_t i = 0; i + 2 < m_indices.size(); i += 3)
+    for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
     {
-        unsigned int idx[3];
-        for (int j = 0; j < 3; ++j)
+        const aiFace& face = mesh->mFaces[i];
+        if (face.mNumIndices == 3)
         {
-            unsigned int vertexIdx = m_indices[i + j];
-            const glm::vec3& pos = m_vertices[vertexIdx].position;
-
-            auto it = std::find(m_positions.begin(), m_positions.end(), pos);
-            idx[j] = static_cast<unsigned int>(std::distance(m_positions.begin(), it));
+            unsigned int idx[3];
+            for (int j = 0; j < 3; ++j)
+            {
+                idx[j] = m_vertexToPositionIndex[face.mIndices[j]];
+            }
+            uniqueEdges.insert(UniqueEdge{idx[0], idx[1]});
+            uniqueEdges.insert(UniqueEdge{idx[1], idx[2]});
+            uniqueEdges.insert(UniqueEdge{idx[2], idx[0]});
         }
-
-        uniqueEdges.insert(UniqueEdge{idx[0], idx[1]});
-        uniqueEdges.insert(UniqueEdge{idx[1], idx[2]});
-        uniqueEdges.insert(UniqueEdge{idx[2], idx[0]});
     }
 
     for (const auto& e : uniqueEdges)
@@ -208,7 +206,7 @@ void Mesh::loadObjData(const std::string& filePath)
     constructIndices(mesh);
 
     // construct vertices used for specific constraints
-    constructDistanceConstraintVertices();
+    constructDistanceConstraintVertices(mesh);
     constructVolumeConstraintVertices(mesh);
     constructEnvCollisionConstraintVertices();
 }
@@ -290,60 +288,62 @@ void Mesh::constructVolumeConstraints(float& k)
     });
 }
 
+// TODO : fixme
 void Mesh::constructEnvCollisionConstraints()
 {
-    for (size_t meshIdx = 0; meshIdx < m_candidateObjectMeshes.size(); ++meshIdx)
-    {
-        const auto& cMesh = m_candidateObjectMeshes[meshIdx];
-        if (!cMesh) continue;
+    // for (size_t meshIdx = 0; meshIdx < m_candidateObjectMeshes.size(); ++meshIdx)
+    // {
+    //     const auto& cMesh = m_candidateObjectMeshes[meshIdx];
+    //     if (!cMesh) continue;
 
-        // Create a new EnvCollisionConstraints for this mesh
-        EnvCollisionConstraints envCollisionConstraints;
-        envCollisionConstraints.candidateMesh = cMesh;
+    //     // Create a new EnvCollisionConstraints for this mesh
+    //     EnvCollisionConstraints envCollisionConstraints;
+    //     envCollisionConstraints.candidateMesh = cMesh;
 
-        // Get vertices from the candidate mesh
-        const auto& vertices = cMesh->getVertices();
+    //     // Get vertices from the candidate mesh
+    //     const auto& vertices = cMesh->getVertices();
 
-        // Loop through source vertices
-        for (const auto& v : envCollisionConstraintVertices)
-        {
-            // Only process every third vertex (first vertex of each triangle)
-            for (size_t vIdx = 0; vIdx < vertices.size(); vIdx += 3)
-            {
-                // Store the index where this constraint will be added
-                size_t constraintIdx = envCollisionConstraints.C.size();
+    //     // Loop through source vertices
+    //     for (const auto& v : envCollisionConstraintVertices)
+    //     {
+    //         // Only process every third vertex (first vertex of each triangle)
+    //         for (size_t vIdx = 0; vIdx < vertices.size(); vIdx += 3)
+    //         {
+    //             // Store the index where this constraint will be added
+    //             size_t constraintIdx = envCollisionConstraints.C.size();
 
-                // Add to map of vertex to constraint indices
-                envCollisionConstraints.vertexToConstraints[v].push_back(constraintIdx);
+    //             // Add to map of vertex to constraint indices
+    //             envCollisionConstraints.vertexToConstraints[v].push_back(constraintIdx);
 
-                // Create constraint function
-                envCollisionConstraints.C.push_back(
-                    [v, vIdx, cMesh=cMesh](const std::vector<glm::vec3>& x) -> float {
-                        const auto& cVertex = cMesh->getVertices()[vIdx];
-                        float dot = glm::dot(cVertex.normal, x[v] - cVertex.position);
-                        return dot;
-                    });
+    //             // Create constraint function
+    //             envCollisionConstraints.C.push_back(
+    //                 [v, vIdx, cMesh=cMesh](const std::vector<glm::vec3>& x) -> float {
+    //                     const auto& cVertex = cMesh->getVertices()[vIdx];
+    //                     float dot = glm::dot(cVertex.normal, x[v] - cVertex.position);
+    //                     return dot;
+    //                 });
 
-                // Create gradient function
-                envCollisionConstraints.gradC.push_back(
-                    [v, vIdx, cMesh=cMesh](const std::vector<glm::vec3>& x) -> std::vector<glm::vec3> {
-                        const auto& cVertex = cMesh->getVertices()[vIdx];
-                        return { cVertex.normal };
-                    });
+    //             // Create gradient function
+    //             envCollisionConstraints.gradC.push_back(
+    //                 [v, vIdx, cMesh=cMesh](const std::vector<glm::vec3>& x) -> std::vector<glm::vec3> {
+    //                     const auto& cVertex = cMesh->getVertices()[vIdx];
+    //                     return { cVertex.normal };
+    //                 });
 
-                // Store affected vertex
-                envCollisionConstraints.vertices.push_back(v);
-            }
-        }
+    //             // Store affected vertex
+    //             envCollisionConstraints.vertices.push_back(v);
+    //         }
+    //     }
 
-        // Only add if we have constraints
-        if (!envCollisionConstraints.C.empty())
-        {
-            perEnvCollisionConstraints.push_back(envCollisionConstraints);
-        }
-    }
+    //     // Only add if we have constraints
+    //     if (!envCollisionConstraints.C.empty())
+    //     {
+    //         perEnvCollisionConstraints.push_back(envCollisionConstraints);
+    //     }
+    // }
 }
 
+// TODO : refactor
 void Mesh::initVerticesBuffer()
 {
     glGenVertexArrays(1, &m_VAO);
@@ -375,6 +375,7 @@ void Mesh::initVerticesBuffer()
     glBindVertexArray(0);
 }
 
+// TODO : refactor
 void Mesh::initNormalBuffers(GLuint& vao, GLuint& vbo, size_t numElements)
 {
     glGenVertexArrays(1, &vao);
@@ -411,17 +412,14 @@ void Mesh::update()
     for (size_t i = 0; i < n; ++i)
     {
         const glm::vec3& updatedPosition = m_positions[i];
-        // logger::debug("Position {}: ({}, {}, {})", i, updatedPosition.x, updatedPosition.y, updatedPosition.z); // TODO : remove
         const auto& duplicates = m_positionToVertexIndices[i];
-        // logger::debug("Duplicates: {}", duplicates); // TODO : remove
         for (unsigned int idx : duplicates)
         {
             m_vertices[idx].position = updatedPosition;
         }
     }
 
-    // logger::debug(""); // TODO : remove
-
+    // TODO : refactor
     // Recalculate face normals using the helper
     std::vector<glm::vec3> updatedFaceNormals = calculateFaceNormals();
 

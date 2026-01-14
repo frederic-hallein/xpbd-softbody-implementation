@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "ImGuiWindow.hpp"
-#include "Scene.hpp"
+#include "SceneManager.hpp"
 #include "Timer.hpp"
 
 class PhysicsEngine
@@ -28,8 +28,8 @@ public:
     MeshManager* getMeshManager() const { return m_meshManager.get(); }
     TextureManager* getTextureManager() const { return m_textureManager.get(); }
 
-    Scene* getCurrentScene();
     Camera* getCurrentCamera();
+    SceneManager* getSceneManager() const { return m_sceneManager.get(); }
 
 private:
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height) { glViewport(0, 0, width, height); }
@@ -40,10 +40,6 @@ private:
     std::unique_ptr<ShaderManager> loadShaders();
     std::unique_ptr<MeshManager> loadMeshes();
     std::unique_ptr<TextureManager> loadTextures();
-
-    void createScene(const std::string& sceneName, const std::string& scenePath);
-    void createScenes();
-    void switchScene(const std::string& sceneName);
 
 private:
     const char* m_engineName;
@@ -60,7 +56,5 @@ private:
     std::unique_ptr<Timer> m_timer;
 
     std::unique_ptr<DebugWindow> m_debugWindow;
-
-    std::unordered_map<std::string, std::unique_ptr<Scene>> m_scenes;
-    std::string m_currentSceneName;
+    std::unique_ptr<SceneManager> m_sceneManager;
 };
