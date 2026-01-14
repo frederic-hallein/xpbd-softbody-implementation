@@ -85,7 +85,7 @@ public:
         const Mesh* candidateMesh;
         std::vector<Constraint> C;
         std::vector<ConstraintGradient> gradC;
-        std::map<unsigned int, std::vector<size_t>> vertexToConstraints;
+        std::map<unsigned int, std::vector<size_t>> vertexToConstraints; // TODO : size_t ???
     };
     std::vector<EnvCollisionConstraints> perEnvCollisionConstraints;
 
@@ -98,11 +98,10 @@ private:
     void constructVertices(const aiMesh* mesh);
     void constructIndices(const aiMesh* mesh);
 
-    std::vector<Triangle> constructTriangles();
     std::vector<glm::vec3> calculateFaceNormals();
 
     void constructDistanceConstraintVertices();
-    void constructVolumeConstraintVertices();
+    void constructVolumeConstraintVertices(const aiMesh* mesh);
     void constructEnvCollisionConstraintVertices();
 
 private:
@@ -110,7 +109,8 @@ private:
     std::string m_meshPath;
 
     std::vector<glm::vec3> m_positions;
-    std::vector<std::vector<unsigned int>> m_duplicatePositionIndices;
+    std::unordered_map<unsigned int, std::vector<unsigned int>> m_positionToVertexIndices;
+    std::vector<unsigned int> m_vertexToPositionIndex;
 
     GLuint m_VAO, m_VBO, m_EBO;
     std::vector<Vertex> m_vertices;

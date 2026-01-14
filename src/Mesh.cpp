@@ -6,6 +6,9 @@
 
 void Mesh::constructVertices(const aiMesh* mesh)
 {
+    m_vertexToPositionIndex.clear();
+    m_vertexToPositionIndex.reserve(mesh->mNumVertices);
+
     for (size_t i = 0; i < mesh->mNumVertices; ++i)
     {
         Vertex vertex;
@@ -19,16 +22,19 @@ void Mesh::constructVertices(const aiMesh* mesh)
 
         // Keep track of only unique vertex positions
         auto pit = std::find(m_positions.begin(), m_positions.end(), vertex.position);
+        int posIdx;
         if (pit == m_positions.end())
         {
+            posIdx = m_positions.size();
             m_positions.push_back(vertex.position);
-            m_duplicatePositionIndices.push_back({static_cast<unsigned int>(i)});
         }
         else
         {
-            size_t pidx = std::distance(m_positions.begin(), pit);
-            m_duplicatePositionIndices[pidx].push_back(i);
+            posIdx = std::distance(m_positions.begin(), pit);
         }
+
+        m_positionToVertexIndices[posIdx].push_back(i);
+        m_vertexToPositionIndex.push_back(posIdx);
 
         // Vertex texture coordinates
         if(mesh->mTextureCoords[0])
@@ -55,6 +61,14 @@ void Mesh::constructVertices(const aiMesh* mesh)
 
 void Mesh::constructIndices(const aiMesh* mesh)
 {
+    m_indices.clear();
+    size_t totalIndices = 0;
+    for (size_t i = 0; i < mesh->mNumFaces; ++i)
+    {
+        totalIndices += mesh->mFaces[i].mNumIndices;
+    }
+
+    m_indices.reserve(totalIndices);
     for(size_t i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];
@@ -63,36 +77,6 @@ void Mesh::constructIndices(const aiMesh* mesh)
             m_indices.push_back(face.mIndices[j]);
         }
     }
-}
-
-std::vector<Mesh::Triangle> Mesh::constructTriangles()
-{
-    std::vector<Triangle> triangles;
-    triangles.reserve(m_indices.size() / 3);
-
-    // Process triangles directly from m_indices
-    for (size_t i = 0; i + 2 < m_indices.size(); i += 3)
-    {
-        // Get position indices for each vertex in the triangle
-        unsigned int posIndices[3];
-        for (int j = 0; j < 3; ++j)
-        {
-            unsigned int vertexIdx = m_indices[i + j];
-            const glm::vec3& pos = m_vertices[vertexIdx].position;
-
-            // Find this position in m_positions
-            auto it = std::find(m_positions.begin(), m_positions.end(), pos);
-            posIndices[j] = static_cast<unsigned int>(std::distance(m_positions.begin(), it));
-        }
-
-        Triangle tri;
-        tri.v1 = posIndices[0];
-        tri.v2 = posIndices[1];
-        tri.v3 = posIndices[2];
-        triangles.push_back(tri);
-    }
-
-    return triangles;
 }
 
 std::vector<glm::vec3> Mesh::calculateFaceNormals()
@@ -118,6 +102,7 @@ std::vector<glm::vec3> Mesh::calculateFaceNormals()
     return faceNormals;
 }
 
+// TODO : refactor to make it more simple and maybe use mesh parameter
 void Mesh::constructDistanceConstraintVertices()
 {
     struct UniqueEdge
@@ -137,29 +122,23 @@ void Mesh::constructDistanceConstraintVertices()
     };
 
     std::set<UniqueEdge> uniqueEdges;
-
-    // Process triangles directly from m_indices
     for (size_t i = 0; i + 2 < m_indices.size(); i += 3)
     {
-        // Get position indices for each vertex in the triangle
         unsigned int idx[3];
         for (int j = 0; j < 3; ++j)
         {
             unsigned int vertexIdx = m_indices[i + j];
             const glm::vec3& pos = m_vertices[vertexIdx].position;
 
-            // Find this position in m_positions
             auto it = std::find(m_positions.begin(), m_positions.end(), pos);
             idx[j] = static_cast<unsigned int>(std::distance(m_positions.begin(), it));
         }
 
-        // Add three edges for this triangle
         uniqueEdges.insert(UniqueEdge{idx[0], idx[1]});
         uniqueEdges.insert(UniqueEdge{idx[1], idx[2]});
         uniqueEdges.insert(UniqueEdge{idx[2], idx[0]});
     }
 
-    // Create edges from unique pairs
     for (const auto& e : uniqueEdges)
     {
         Edge edge;
@@ -169,10 +148,18 @@ void Mesh::constructDistanceConstraintVertices()
     }
 }
 
-void Mesh::constructVolumeConstraintVertices()
+void Mesh::constructVolumeConstraintVertices(const aiMesh* mesh)
 {
-    std::vector<Triangle> triangles = constructTriangles();
-    volumeConstraints.triangles.assign(triangles.begin(), triangles.end());
+    for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
+        const aiFace& face = mesh->mFaces[i];
+        if (face.mNumIndices == 3) {
+            Triangle triangle;
+            triangle.v1 = m_vertexToPositionIndex[face.mIndices[0]];
+            triangle.v2 = m_vertexToPositionIndex[face.mIndices[1]];
+            triangle.v3 = m_vertexToPositionIndex[face.mIndices[2]];
+            volumeConstraints.triangles.push_back(triangle);
+        }
+    }
 }
 
 void Mesh::constructEnvCollisionConstraintVertices()
@@ -222,7 +209,7 @@ void Mesh::loadObjData(const std::string& filePath)
 
     // construct vertices used for specific constraints
     constructDistanceConstraintVertices();
-    constructVolumeConstraintVertices();
+    constructVolumeConstraintVertices(mesh);
     constructEnvCollisionConstraintVertices();
 }
 
@@ -254,8 +241,11 @@ void Mesh::constructDistanceConstraints()
         });
 
         distanceConstraints.gradC.push_back([=](const std::vector<glm::vec3>& x) -> std::vector<glm::vec3> {
+            std::vector<glm::vec3> grad(x.size(), glm::vec3(0.0f));
             glm::vec3 n = (x[v1] - x[v2]) / glm::distance(x[v1], x[v2]);
-            return { n, -n };
+            grad[v1] = n;
+            grad[v2] = -n;
+            return grad;
         });
     }
 }
@@ -272,7 +262,7 @@ void Mesh::constructVolumeConstraints(float& k)
         V_0 += factor * glm::dot(glm::cross(m_positions[v1], m_positions[v2]), m_positions[v3]);
     }
 
-    volumeConstraints.C.push_back([this, factor, V_0, &k](const std::vector<glm::vec3>& x) -> float {
+    volumeConstraints.C.push_back([this, factor, V_0, k_ref = std::ref(k)](const std::vector<glm::vec3>& x) -> float {
         float V = 0.0f;
         for (const auto& triangle : volumeConstraints.triangles)
         {
@@ -281,22 +271,23 @@ void Mesh::constructVolumeConstraints(float& k)
             unsigned int v3 = triangle.v3;
             V += factor * glm::dot(glm::cross(x[v1], x[v2]), x[v3]);
         }
-        return V - k * V_0;
+
+        return V - k_ref.get() * V_0;
     });
 
-    for (const auto& triangle : volumeConstraints.triangles)
-    {
-        unsigned int v1 = triangle.v1;
-        unsigned int v2 = triangle.v2;
-        unsigned int v3 = triangle.v3;
-        volumeConstraints.gradC.push_back([=](const std::vector<glm::vec3>& x) -> std::vector<glm::vec3> {
-            glm::vec3 n1(0.0f), n2(0.0f), n3(0.0f);
-            n1 += factor * glm::cross(x[v2], x[v3]);
-            n2 += factor * glm::cross(x[v3], x[v1]);
-            n3 += factor * glm::cross(x[v1], x[v2]);
-            return { n1, n2, n3 };
-        });
-    }
+    volumeConstraints.gradC.push_back([this, factor](const std::vector<glm::vec3>& x) -> std::vector<glm::vec3> {
+        std::vector<glm::vec3> grad(x.size(), glm::vec3(0.0f));
+        for (const auto& triangle : volumeConstraints.triangles)
+        {
+            unsigned int v1 = triangle.v1;
+            unsigned int v2 = triangle.v2;
+            unsigned int v3 = triangle.v3;
+            grad[v1] += factor * glm::cross(x[v2], x[v3]);
+            grad[v2] += factor * glm::cross(x[v3], x[v1]);
+            grad[v3] += factor * glm::cross(x[v1], x[v2]);
+        }
+        return grad;
+    });
 }
 
 void Mesh::constructEnvCollisionConstraints()
@@ -420,12 +411,16 @@ void Mesh::update()
     for (size_t i = 0; i < n; ++i)
     {
         const glm::vec3& updatedPosition = m_positions[i];
-        const auto& duplicates = m_duplicatePositionIndices[i];
+        // logger::debug("Position {}: ({}, {}, {})", i, updatedPosition.x, updatedPosition.y, updatedPosition.z); // TODO : remove
+        const auto& duplicates = m_positionToVertexIndices[i];
+        // logger::debug("Duplicates: {}", duplicates); // TODO : remove
         for (unsigned int idx : duplicates)
         {
             m_vertices[idx].position = updatedPosition;
         }
     }
+
+    // logger::debug(""); // TODO : remove
 
     // Recalculate face normals using the helper
     std::vector<glm::vec3> updatedFaceNormals = calculateFaceNormals();

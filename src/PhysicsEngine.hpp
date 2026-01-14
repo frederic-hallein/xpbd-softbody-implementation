@@ -56,7 +56,7 @@ private:
     std::unique_ptr<MeshManager> m_meshManager;
     std::unique_ptr<TextureManager> m_textureManager;
 
-    const int m_targetFPS = 60;
+    const int m_targetFPS;
     std::unique_ptr<Timer> m_timer;
 
     std::unique_ptr<DebugWindow> m_debugWindow;

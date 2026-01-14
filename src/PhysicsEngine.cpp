@@ -175,7 +175,8 @@ PhysicsEngine::PhysicsEngine(
 )
     : m_engineName(engineName),
       m_screenWidth(screenWidth),
-      m_screenHeight(screenHeight)
+      m_screenHeight(screenHeight),
+      m_targetFPS(60.0f)
 {
     logger::debug("--- Running in DEBUG mode ---");
     logger::info("Initializing: {}", engineName);
@@ -219,7 +220,7 @@ PhysicsEngine::PhysicsEngine(
 
     // create and select first scene
     createScenes();
-    switchScene("Test Scene 2"); // TODO : couple with ImGui
+    switchScene("Test Scene 1"); // TODO : couple with ImGui
 };
 
 PhysicsEngine::~PhysicsEngine()

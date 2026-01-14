@@ -224,6 +224,7 @@ void Scene::applyGravity(
     }
 }
 
+// TODO : fixme
 float Scene::calculateDeltaLambda(
     float C_j,
     const std::vector<glm::vec3>& gradC_j,
@@ -236,14 +237,12 @@ float Scene::calculateDeltaLambda(
 {
     float gradCMInverseGradCT = 0.0f;
     float gradCPosDiff = 0.0f;
-    size_t n = constraintVertices.size();
-
-    for (size_t i = 0; i < n; ++i)
+    for (size_t i = 0; i < constraintVertices.size(); ++i)
     {
         unsigned int v = constraintVertices[i];
         float w = 1.0f / M[v];
-        gradCMInverseGradCT += w * glm::dot(gradC_j[i], gradC_j[i]);
-        gradCPosDiff += glm::dot(gradC_j[i], posDiff[v]);
+        gradCMInverseGradCT += w * glm::dot(gradC_j[v], gradC_j[v]);
+        gradCPosDiff += glm::dot(gradC_j[v], posDiff[v]);
     }
 
     return (-C_j - gamma * gradCPosDiff) / ((1 + gamma) * gradCMInverseGradCT + alphaTilde);
@@ -277,12 +276,11 @@ void Scene::setDeltaX(
 )
 {
     std::fill(deltaX.begin(), deltaX.end(), glm::vec3(0.0f));
-    size_t n = constraintVertices.size();
-    for (size_t i = 0; i < n; ++i)
+    for (size_t i = 0; i < constraintVertices.size(); ++i)
     {
         unsigned int v = constraintVertices[i];
         float w = 1.0f / M[v];
-        deltaX[v] = deltaLambda * w * gradC_j[i];
+        deltaX[v] = deltaLambda * w * gradC_j[v];
     }
 }
 
@@ -305,18 +303,6 @@ void Scene::solveDistanceConstraints(
     const Mesh::DistanceConstraints& distanceConstraints
 )
 {
-    size_t edgesSize = distanceConstraints.edges.size();
-    size_t CSize = distanceConstraints.C.size();
-    size_t gradCSize = distanceConstraints.gradC.size();
-    if (edgesSize != CSize && edgesSize != gradCSize)
-    {
-        logger::error("DistanceConstraints size mismatch:");
-        logger::error("constraints = {},", CSize);
-        logger::error("gradConstraints = {}", gradCSize);
-        logger::error("edgeVertices = {}", edgesSize);
-        return;
-    }
-
     std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
     for (size_t j = 0; j < distanceConstraints.edges.size(); ++j)
     {
@@ -331,7 +317,6 @@ void Scene::solveDistanceConstraints(
     }
 }
 
-// TODO : fixme
 void Scene::solveVolumeConstraints(
     std::vector<glm::vec3>& x,
     const std::vector<glm::vec3>& posDiff,
@@ -341,33 +326,21 @@ void Scene::solveVolumeConstraints(
     const Mesh::VolumeConstraints& volumeConstraints
 )
 {
-    // size_t trianglesSize = volumeConstraints.triangles.size();
-    // size_t CSize = volumeConstraints.C.size();
-    // size_t gradCSize = volumeConstraints.gradC.size();
-    // if (trianglesSize != gradCSize)
-    // {
-    //     logger::error("VolumeConstraints size mismatch:");
-    //     logger::error("constraints = {},", CSize);
-    //     logger::error("gradConstraints = {}", gradCSize);
-    //     logger::error("triangleVertices = {}", trianglesSize);
-    //     return;
-    // }
+    float C_j = volumeConstraints.C[0](x);
+    std::vector<glm::vec3> gradC_j = volumeConstraints.gradC[0](x);
 
-    // for (size_t j = 0; j < volumeConstraints.triangles.size(); ++j)
-    // {
-    //     float C_j = volumeConstraints.C[0](x);
-    //     std::vector<glm::vec3> gradC_j = volumeConstraints.gradC[j](x);
-    //     const auto& tri = volumeConstraints.triangles[j];
-    //     const std::array<unsigned int, 3> constraintVertices = { tri.v1, tri.v2, tri.v3 };
+    std::vector<unsigned int> constraintVertices;
+    for (const auto& tri : volumeConstraints.triangles)
+    {
+        constraintVertices.push_back(tri.v1);
+        constraintVertices.push_back(tri.v2);
+        constraintVertices.push_back(tri.v3);
+    }
 
-    //     float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
-    //     std::vector<glm::vec3> deltaX = calculateDeltaX(deltaLambda, M, gradC_j, constraintVertices);
-
-    //     for (size_t k = 0; k < deltaX.size(); ++k)
-    //     {
-    //         x[k] += deltaX[k];
-    //     }
-    // }
+    float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
+    std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
+    setDeltaX(deltaX, deltaLambda, M, gradC_j, constraintVertices);
+    updateConstraintPositions(x, deltaX);
 }
 
 // TODO : fixme
@@ -457,9 +430,9 @@ void Scene::applyXPBD(
     const int n = m_xpbdSubsteps;
     float deltaTime_s = deltaTime / static_cast<float>(n);
 
-    float alphaTilde = m_enableDistanceConstraints ? m_alpha / (deltaTime_s * deltaTime_s) : 0.0f;
-    float betaTilde = m_enableDistanceConstraints ? (deltaTime_s * deltaTime_s) * m_beta : 0.0f;
-    float gamma = m_enableDistanceConstraints ? (alphaTilde * betaTilde) / deltaTime_s : 0.0f;
+    float alphaTilde = m_alpha / (deltaTime_s * deltaTime_s);
+    float betaTilde  = (deltaTime_s * deltaTime_s) * m_beta;
+    float gamma      = (alphaTilde * betaTilde) / deltaTime_s;
 
     while (subStep < n + 1)
     {
@@ -524,6 +497,7 @@ void Scene::applyXPBD(
     }
 }
 
+// TODO : maybe exclude ground from XPBD objects
 void Scene::applyGroundCollision(Object& object)
 {
     auto& vertexTransforms = object.getVertexTransforms();

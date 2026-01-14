@@ -153,7 +153,7 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     float& alpha = scene.getAlpha();
     ImGui::Text("Compliance:");
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    ImGui::SliderFloat("##Compliance", &alpha, 0.0f, 0.1f);
+    ImGui::SliderFloat("##Compliance", &alpha, 0.001, 0.1f);
     ImGui::PopItemWidth();
 
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
@@ -165,11 +165,12 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     ImGui::PopItemWidth();
     ImGui::Separator();
 
-    // float& k = scene.getOverpressureFactor();
-    // ImGui::Text("k");
-    // ImGui::SameLine();
-    // ImGui::SliderFloat("##k", &k, 0.001f, 10.0f);
-    // ImGui::Separator();
+    float& k = scene.getOverpressureFactor();
+    ImGui::Text("Overpressure:");
+    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
+    ImGui::SliderFloat("##k", &k, 1e-6f, 10.0f);
+
+    ImGui::Separator();
 }
 
 void DebugWindow::displaySceneReset(Scene& scene)
