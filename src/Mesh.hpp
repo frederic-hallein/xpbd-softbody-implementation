@@ -117,8 +117,15 @@ private:
     std::vector<Vertex> m_vertices;
     std::vector<unsigned int> m_indices;
 
-    GLuint m_vertexNormalVAO, m_vertexNormalVBO;
-    GLuint m_faceNormalVAO, m_faceNormalVBO;
+    struct NormalLines
+    {
+        GLuint VAO = 0;
+        GLuint VBO = 0;
+        size_t vertexCount = 0;
+        size_t faceCount = 0;
+    };
+    NormalLines m_normalLines;
+    void initNormalBuffers();
     float m_vertexNormalLength;
     float m_faceNormalLength;
 

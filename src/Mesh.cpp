@@ -79,29 +79,6 @@ void Mesh::constructIndices(const aiMesh* mesh)
     }
 }
 
-std::vector<glm::vec3> Mesh::calculateFaceNormals()
-{
-    std::vector<glm::vec3> faceNormals;
-    size_t numTriangles = m_indices.size() / 3;
-    faceNormals.reserve(numTriangles);
-
-    for (size_t i = 0; i + 2 < m_indices.size(); i += 3)
-    {
-        unsigned int idx0 = m_indices[i];
-        unsigned int idx1 = m_indices[i + 1];
-        unsigned int idx2 = m_indices[i + 2];
-
-        const glm::vec3& v0 = m_vertices[idx0].position;
-        const glm::vec3& v1 = m_vertices[idx1].position;
-        const glm::vec3& v2 = m_vertices[idx2].position;
-
-        glm::vec3 faceNormal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
-        faceNormals.push_back(faceNormal);
-    }
-
-    return faceNormals;
-}
-
 void Mesh::constructDistanceConstraintVertices(const aiMesh* mesh)
 {
     struct UniqueEdge
@@ -343,7 +320,6 @@ void Mesh::constructEnvCollisionConstraints()
     // }
 }
 
-// TODO : refactor
 void Mesh::initVerticesBuffer()
 {
     glGenVertexArrays(1, &m_VAO);
@@ -375,21 +351,24 @@ void Mesh::initVerticesBuffer()
     glBindVertexArray(0);
 }
 
-// TODO : refactor
-void Mesh::initNormalBuffers(GLuint& vao, GLuint& vbo, size_t numElements)
+void Mesh::initNormalBuffers()
 {
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
+    m_normalLines.vertexCount = m_vertices.size();
+    m_normalLines.faceCount = m_indices.size() / 3;
+    size_t totalLineVertices = m_normalLines.vertexCount + m_normalLines.faceCount;
 
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glGenVertexArrays(1, &m_normalLines.VAO);
+    glGenBuffers(1, &m_normalLines.VBO);
 
-    // Allocate buffer for line segments (start and end points of normals)
-    glBufferData(GL_ARRAY_BUFFER, numElements * 2 * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+    glBindVertexArray(m_normalLines.VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalLines.VBO);
+
+    glBufferData(GL_ARRAY_BUFFER, totalLineVertices * 2 * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 }
 
@@ -401,8 +380,30 @@ Mesh::Mesh(const std::string& name, const std::string& meshPath)
 {
     loadObjData(meshPath);
     initVerticesBuffer();
-    initNormalBuffers(m_vertexNormalVAO, m_vertexNormalVBO, m_vertices.size());
-    initNormalBuffers(m_faceNormalVAO, m_faceNormalVBO, m_indices.size() / 3);
+    initNormalBuffers();
+}
+
+std::vector<glm::vec3> Mesh::calculateFaceNormals()
+{
+    std::vector<glm::vec3> faceNormals;
+    size_t numTriangles = m_indices.size() / 3;
+    faceNormals.reserve(numTriangles);
+
+    for (size_t i = 0; i + 2 < m_indices.size(); i += 3)
+    {
+        unsigned int idx0 = m_indices[i];
+        unsigned int idx1 = m_indices[i + 1];
+        unsigned int idx2 = m_indices[i + 2];
+
+        const glm::vec3& p_0 = m_vertices[idx0].position;
+        const glm::vec3& p_1 = m_vertices[idx1].position;
+        const glm::vec3& p_2 = m_vertices[idx2].position;
+
+        glm::vec3 faceNormal = glm::normalize(glm::cross(p_1 - p_0, p_2 - p_0));
+        faceNormals.push_back(faceNormal);
+    }
+
+    return faceNormals;
 }
 
 void Mesh::update()
@@ -419,21 +420,16 @@ void Mesh::update()
         }
     }
 
-    // TODO : refactor
-    // Recalculate face normals using the helper
-    std::vector<glm::vec3> updatedFaceNormals = calculateFaceNormals();
 
-    // Update m_vertices normals
+    std::vector<glm::vec3> updatedFaceNormals = calculateFaceNormals();
     for (size_t i = 0, tri = 0; i + 2 < m_indices.size(); i += 3, ++tri)
     {
         unsigned int idx0 = m_indices[i];
         unsigned int idx1 = m_indices[i + 1];
         unsigned int idx2 = m_indices[i + 2];
 
-        // Use the precomputed normal
         glm::vec3& faceNormal = updatedFaceNormals[tri];
 
-        // Update vertex normals
         m_vertices[idx0].normal = faceNormal;
         m_vertices[idx1].normal = faceNormal;
         m_vertices[idx2].normal = faceNormal;
@@ -455,24 +451,27 @@ void Mesh::draw()
 void Mesh::drawVertexNormals()
 {
     std::vector<glm::vec3> lineVertices;
+    lineVertices.reserve(m_normalLines.vertexCount * 2);
     for (const auto& v : m_vertices)
     {
         lineVertices.push_back(v.position);
         lineVertices.push_back(v.position + v.normal * m_vertexNormalLength);
     }
 
-    glBindVertexArray(m_vertexNormalVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vertexNormalVBO);
+    glBindVertexArray(m_normalLines.VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalLines.VBO);
+
     glBufferSubData(GL_ARRAY_BUFFER, 0, lineVertices.size() * sizeof(glm::vec3), lineVertices.data());
 
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(lineVertices.size()));
-
     glBindVertexArray(0);
 }
 
 void Mesh::drawFaceNormals()
 {
     std::vector<glm::vec3> lineVertices;
+    lineVertices.reserve(m_normalLines.faceCount * 2);
+
     for (size_t i = 0; i + 2 < m_indices.size(); i += 3)
     {
         unsigned int idx0 = m_indices[i];
@@ -486,12 +485,13 @@ void Mesh::drawFaceNormals()
         lineVertices.push_back(centroid + normal * m_faceNormalLength);
     }
 
-    glBindVertexArray(m_faceNormalVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_faceNormalVBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, lineVertices.size() * sizeof(glm::vec3), lineVertices.data());
+    glBindVertexArray(m_normalLines.VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_normalLines.VBO);
 
-    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(lineVertices.size()));
+    size_t vertexNormalsSize = m_normalLines.vertexCount * 2 * sizeof(glm::vec3);
+    glBufferSubData(GL_ARRAY_BUFFER, vertexNormalsSize, lineVertices.size() * sizeof(glm::vec3), lineVertices.data());
 
+    glDrawArrays(GL_LINES, static_cast<GLint>(m_normalLines.vertexCount * 2), static_cast<GLsizei>(lineVertices.size()));
     glBindVertexArray(0);
 }
 
@@ -501,9 +501,6 @@ void Mesh::destroy()
     glDeleteBuffers(1, &m_VBO);
     glDeleteBuffers(1, &m_EBO);
 
-    glDeleteVertexArrays(1, &m_vertexNormalVAO);
-    glDeleteBuffers(1, &m_vertexNormalVBO);
-
-    glDeleteVertexArrays(1, &m_faceNormalVAO);
-    glDeleteBuffers(1, &m_faceNormalVBO);
+    glDeleteVertexArrays(1, &m_normalLines.VAO);
+    glDeleteBuffers(1, &m_normalLines.VBO);
 }
