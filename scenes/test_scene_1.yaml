@@ -20,7 +20,7 @@ scene:
       scale: [1000.0, 1.0, 1000.0]
       shader: ground
       mesh: surface
-      texture: checkerboard
+      texture: tile
       isStatic: true
 
     # dirt block

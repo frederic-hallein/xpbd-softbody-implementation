@@ -8,5 +8,6 @@ uniform sampler2D ourTexture;
 
 void main()
 {
-    FragColor = texture(ourTexture, TexCoord);
+    vec2 scaledTexCoord = TexCoord * 100.0f;
+    FragColor = texture(ourTexture, scaledTexCoord);
 }

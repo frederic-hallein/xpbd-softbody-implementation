@@ -4,6 +4,7 @@
 #include <tuple>
 #include <string_view>
 
+
 // Scene configuration
 static constexpr std::array<std::pair<std::string_view, std::string_view>, 2> SCENE_LIST = {{
     {"Test Scene 1", "test_scene_1.yaml"},
@@ -28,7 +29,8 @@ static constexpr std::array<std::pair<std::string_view, std::string_view>, 3> ME
 }};
 
 // Texture configuration
-static constexpr std::array<std::pair<std::string_view, std::string_view>, 2> TEXTURE_DATA = {{
+static constexpr std::array<std::pair<std::string_view, std::string_view>, 3> TEXTURE_DATA = {{
     {"dirtblock", "dirtblock.jpg"},
     {"checkerboard", "checkerboard.png"},
+    {"tile", "tile.jpg"},
 }};
