@@ -24,6 +24,7 @@ std::unique_ptr<ShaderManager> PhysicsEngine::loadShaders()
         }
     }
 
+    logger::info(" - Loaded shaders successfully");
     shaderManager->addResources(std::move(shaders));
     return shaderManager;
 }
@@ -44,6 +45,7 @@ std::unique_ptr<MeshManager> PhysicsEngine::loadMeshes()
         }
     }
 
+    logger::info(" - Loaded meshes successfully");
     meshManager->addResources(std::move(meshes));
     return meshManager;
 }
@@ -64,6 +66,7 @@ std::unique_ptr<TextureManager> PhysicsEngine::loadTextures()
         }
     }
 
+    logger::info(" - Loaded textures successfully");
     textureManager->addResources(std::move(textures));
     return textureManager;
 }

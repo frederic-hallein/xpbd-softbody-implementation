@@ -1,8 +1,10 @@
-#include <iostream>
-
+#include "logger.hpp"
 #include "Texture.hpp"
 
-Texture::Texture(const std::string& name, const std::string& texturePath)
+Texture::Texture(
+    const std::string& name,
+    const std::string& texturePath
+)
     : m_name(name), m_texturePath(texturePath)
 {
     glGenTextures(1, &m_ID);
@@ -10,19 +12,11 @@ Texture::Texture(const std::string& name, const std::string& texturePath)
     // Load the texture
     stbi_set_flip_vertically_on_load(true);
     int width, height, nrComponents;
-    unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrComponents, 0);
+    unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrComponents, 3);
     if (data)
     {
-        GLenum format;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
-
         glBindTexture(GL_TEXTURE_2D, m_ID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
         // Set texture wrapping and filtering options
@@ -35,7 +29,7 @@ Texture::Texture(const std::string& name, const std::string& texturePath)
     }
     else
     {
-        std::cerr << "Failed to load texture: " << texturePath << std::endl;
+        logger::error("Failed to load texture: {}", texturePath);
         stbi_image_free(data);
     }
 }

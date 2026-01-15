@@ -98,22 +98,18 @@ void Object::resetVertexTransforms()
 // TODO : remove all light related code
 void Object::render()
 {
-    if (m_texture.has_value())
-    {
-        m_texture->bind();
-    }
+    if (m_texture) m_texture->bind();
 
     glPolygonMode(GL_FRONT_AND_BACK, m_polygonMode);
 
-
-    glm::vec3 lightDirection = glm::vec3(
-        1.0f,
-        0.5f,
-        0.0
-    );
+    // glm::vec3 lightDirection = glm::vec3(
+    //     1.0f,
+    //     0.5f,
+    //     0.0
+    // );
 
     m_shader.useProgram();
-    m_shader.setVec3("lightDir", lightDirection);
+    // m_shader.setVec3("lightDir", lightDirection);
 
     int projectionLoc = glGetUniformLocation(m_shader.getID(), "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getProjectionMatrix()));

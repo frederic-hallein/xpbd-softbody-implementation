@@ -4,6 +4,7 @@
 #include "Object.hpp"
 #include "Mesh.hpp"
 
+
 void Mesh::constructVertices(const aiMesh* mesh)
 {
     m_vertexToPositionIndex.clear();
