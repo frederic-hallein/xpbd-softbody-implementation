@@ -1,5 +1,6 @@
 #include <future>
 #include <fstream>
+#include <memory>
 #include <yaml-cpp/yaml.h>
 
 #include "logger.hpp"
@@ -28,6 +29,13 @@ std::unique_ptr<Camera> Scene::createCamera(GLFWwindow* window, unsigned int scr
         window
     );
 }
+
+// std::unique_ptr<Light> Scene::createLight()
+// {
+//     return std::make_unique<Light>(
+
+//     );
+// }
 
 std::unique_ptr<Object> Scene::createObject(const ObjectConfig& config)
 {
@@ -73,7 +81,8 @@ std::unique_ptr<Object> Scene::createObject(const ObjectConfig& config)
             shaderOpt->get(),
             meshOpt->get(),
             textureOpt->get(),
-            config.isStatic
+            config.isStatic,
+            config.color
         );
     } else {
         return std::make_unique<Object>(
@@ -83,7 +92,8 @@ std::unique_ptr<Object> Scene::createObject(const ObjectConfig& config)
             shaderOpt->get(),
             meshOpt->get(),
             std::nullopt,
-            config.isStatic
+            config.isStatic,
+            config.color
         );
     }
 }
@@ -158,6 +168,11 @@ SceneConfig Scene::parseSceneConfig(const YAML::Node& sceneYaml)
         objConfig.shaderName = objYaml["shader"].as<std::string>();
         objConfig.meshName = objYaml["mesh"].as<std::string>();
         objConfig.textureName = objYaml["texture"].as<std::string>();
+        objConfig.color = glm::vec3(
+            objYaml["color"][0].as<float>(),
+            objYaml["color"][1].as<float>(),
+            objYaml["color"][2].as<float>()
+        );
         objConfig.isStatic = objYaml["isStatic"].as<bool>();
 
         config.objects.push_back(objConfig);
@@ -194,6 +209,7 @@ Scene::Scene(
 )
     :   m_name(""),
         m_camera(createCamera(window, screenWidth, screenHeight)),
+        // m_light(createLight()),
         m_shaderManager(shaderManager),
         m_meshManager(meshManager),
         m_textureManager(textureManager),
@@ -569,7 +585,7 @@ void Scene::render()
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    glClearColor(0.1f, 0.5f, 0.4f, 1.0f); // background
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // TODO : use skybox instead
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (const auto& object : m_objects)

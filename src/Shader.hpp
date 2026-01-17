@@ -19,8 +19,9 @@ public:
     void useProgram();
     void destroy();
 
-    void setUniform(const std::string& name, const glm::vec3& color);
+    // void setUniform(const std::string& name, const glm::vec3& color);
     void setVec3(const std::string& name, const glm::vec3& value) const;
+    void setInt(const std::string &name, int value) const;
 
 private:
     std::string m_name;

@@ -13,10 +13,11 @@ static constexpr std::array<std::pair<std::string_view, std::string_view>, 3> SC
 }};
 
 // Shader configuration
-static constexpr std::array<std::tuple<std::string_view, std::string_view, std::string_view>, 6> SHADER_DATA = {{
+static constexpr std::array<std::tuple<std::string_view, std::string_view, std::string_view>, 7> SHADER_DATA = {{
     {"vertexNormal", "vertexNormal.vsh", "vertexNormal.fsh"},
     {"faceNormal", "faceNormal.vsh", "faceNormal.fsh"},
     {"ground", "ground.vsh", "ground.fsh"},
+    {"light", "light.vsh", "light.fsh"},
     {"platform", "platform.vsh", "platform.fsh"},
     {"dirtblock", "dirtblock.vsh", "dirtblock.fsh"},
     {"sphere", "sphere.vsh", "sphere.fsh"},

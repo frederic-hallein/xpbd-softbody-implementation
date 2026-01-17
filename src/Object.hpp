@@ -24,7 +24,8 @@ public:
         Shader shader,
         Mesh mesh,
         std::optional<Texture> texture = std::nullopt,
-        bool isStatic = true
+        bool isStatic = true, // TODO : make it actually optional in YAML
+        glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f) // TODO : make it actually optional in YAML
     );
     ~Object();
 
@@ -56,6 +57,7 @@ private:
     static Shader s_faceNormalShader;
     Mesh m_mesh;
     std::optional<Texture> m_texture;
+    glm::vec3 m_color;
     bool m_isStatic;
     GLenum m_polygonMode;
 

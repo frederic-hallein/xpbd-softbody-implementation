@@ -13,6 +13,7 @@
 #include "MeshManager.hpp"
 #include "TextureManager.hpp"
 #include "Camera.hpp"
+#include "Light.hpp"
 #include "Object.hpp"
 
 struct ObjectConfig
@@ -25,6 +26,7 @@ struct ObjectConfig
     std::string shaderName;
     std::string meshName;
     std::string textureName;
+    glm::vec3 color;
     bool isStatic;
 };
 
@@ -94,6 +96,7 @@ public:
 
 private:
     std::unique_ptr<Camera> createCamera(GLFWwindow* window, unsigned int screenWidth, unsigned int screenHeight);
+    std::unique_ptr<Camera> createLight();
 
     std::unique_ptr<Object> createObject(const ObjectConfig& config);
     SceneConfig parseSceneConfig(const YAML::Node& sceneYaml);
@@ -148,6 +151,7 @@ private:
     TextureManager* m_textureManager;
 
     std::unique_ptr<Camera> m_camera;
+    std::unique_ptr<Light> m_light;
 
     std::vector<std::unique_ptr<Object>> m_objects;
 

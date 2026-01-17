@@ -21,6 +21,19 @@ scene:
       shader: ground
       mesh: surface
       texture: tile
+      color: [1.0, 1.0, 1.0]
+      isStatic: true
+
+    # Light
+    - name: Light
+      position: [-10.0, 20.0, 0.0]
+      rotationAxis: [0.0, 0.0, 1.0]
+      rotationDeg: 0.0
+      scale: [0.5, 0.5, 0.5]
+      shader: light
+      mesh: cube
+      texture: ""
+      color: [1.0, 1.0, 1.0]
       isStatic: true
 
     - name: Cone
@@ -31,6 +44,7 @@ scene:
       shader: sphere
       mesh: cone
       texture: ""
+      color: [1.0, 1.0, 1.0]
       isStatic: true
 
     - name: Torus
@@ -41,4 +55,5 @@ scene:
       shader: sphere
       mesh: torus
       texture: ""
+      color: [1.0, 1.0, 1.0]
       isStatic: false

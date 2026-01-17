@@ -1,3 +1,4 @@
+#include "glm/fwd.hpp"
 #include "logger.hpp"
 #include "Object.hpp"
 
@@ -8,13 +9,15 @@ Object::Object(
     Shader shader,
     Mesh mesh,
     std::optional<Texture> texture,
-    bool isStatic
+    bool isStatic,
+    glm::vec3 color
 )
     : m_name(name),
       m_transform(std::move(transform)),
       m_shader(std::move(shader)),
       m_mesh(mesh),
       m_texture(texture),
+      m_color(color),
       m_isStatic(isStatic),
       m_polygonMode(GL_FILL)
 {
@@ -95,21 +98,20 @@ void Object::resetVertexTransforms()
     m_mesh.update();
 }
 
-// TODO : remove all light related code
 void Object::render()
 {
-    if (m_texture) m_texture->bind();
-
     glPolygonMode(GL_FRONT_AND_BACK, m_polygonMode);
 
-    // glm::vec3 lightDirection = glm::vec3(
-    //     1.0f,
-    //     0.5f,
-    //     0.0
-    // );
-
     m_shader.useProgram();
-    // m_shader.setVec3("lightDir", lightDirection);
+    m_shader.setVec3("objectColor", m_color);
+    if (m_texture) {
+        m_texture->bind();
+        m_shader.setInt("ourTexture", 0); // NOTE : 0 for single texture
+        m_shader.setInt("hasTexture", 1);
+    } else {
+        m_shader.setInt("hasTexture", 0);
+    }
+
 
     int projectionLoc = glGetUniformLocation(m_shader.getID(), "projection");
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getProjectionMatrix()));
