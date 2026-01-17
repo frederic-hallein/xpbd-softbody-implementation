@@ -68,6 +68,18 @@ Object::~Object()
     logger::info("  - Destroyed '{}' object successfully", m_name);
 }
 
+void Object::updateTransformWithCOM()
+{
+    glm::vec3 centerOfMass = glm::vec3(0.0f);
+    auto& positions = m_mesh.getPositions();
+    for (const auto& pos : positions)
+    {
+        centerOfMass += pos;
+    }
+    centerOfMass /= static_cast<float>(positions.size());
+    m_transform.setPosition(centerOfMass);
+}
+
 void Object::update(float deltaTime)
 {
     auto& positions = m_mesh.getPositions();
@@ -80,6 +92,7 @@ void Object::update(float deltaTime)
     }
 
     m_mesh.update();
+    updateTransformWithCOM();
 }
 
 void Object::resetVertexTransforms()
@@ -98,12 +111,23 @@ void Object::resetVertexTransforms()
     m_mesh.update();
 }
 
-void Object::render()
+void Object::setProjectionViewUniforms(const Shader& shader)
+{
+    int projectionLoc = glGetUniformLocation(shader.getID(), "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getProjectionMatrix()));
+
+    int viewLoc = glGetUniformLocation(shader.getID(), "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getViewMatrix()));
+}
+
+void Object::render(Object* light)
 {
     glPolygonMode(GL_FRONT_AND_BACK, m_polygonMode);
 
     m_shader.useProgram();
     m_shader.setVec3("objectColor", m_color);
+    m_shader.setVec3("lightColor", light->getColor());
+    m_shader.setVec3("lightPos", light->getTransform().getPosition());
     if (m_texture) {
         m_texture->bind();
         m_shader.setInt("ourTexture", 0); // NOTE : 0 for single texture
@@ -112,36 +136,17 @@ void Object::render()
         m_shader.setInt("hasTexture", 0);
     }
 
-
-    int projectionLoc = glGetUniformLocation(m_shader.getID(), "projection");
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getProjectionMatrix()));
-
-    int viewLoc = glGetUniformLocation(m_shader.getID(), "view");
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getViewMatrix()));
-
+    // draw mesh
+    setProjectionViewUniforms(m_shader);
     m_mesh.draw();
-
 
     // draw vertex normals
     s_vertexNormalShader.useProgram();
-
-    projectionLoc = glGetUniformLocation(s_vertexNormalShader.getID(), "projection");
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getProjectionMatrix()));
-
-    viewLoc = glGetUniformLocation(s_vertexNormalShader.getID(), "view");
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getViewMatrix()));
-
+    setProjectionViewUniforms(s_vertexNormalShader);
     m_mesh.drawVertexNormals();
-
 
     // draw face normals
     s_faceNormalShader.useProgram();
-
-    projectionLoc = glGetUniformLocation(s_faceNormalShader.getID(), "projection");
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getProjectionMatrix()));
-
-    viewLoc = glGetUniformLocation(s_faceNormalShader.getID(), "view");
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getViewMatrix()));
-
+    setProjectionViewUniforms(s_faceNormalShader);
     m_mesh.drawFaceNormals();
 }

@@ -30,9 +30,11 @@ public:
     ~Object();
 
     std::string getName() const { return m_name; }
+    const glm::vec3& getColor() const { return m_color; }
 
     void update(float deltaTime);
-    void render();
+    void updateTransformWithCOM();
+    void render(Object* light);
 
     void setPolygonMode(GLenum mode) { m_polygonMode = mode; }
     GLenum getPolygonMode() const { return m_polygonMode; }
@@ -46,6 +48,7 @@ public:
 
     void resetVertexTransforms();
 
+    void setProjectionViewUniforms(const Shader& shader);
     static void setVertexNormalShader(const Shader& shader) { s_vertexNormalShader = shader; }
     static void setFaceNormalShader(const Shader& shader)   { s_faceNormalShader   = shader; }
 

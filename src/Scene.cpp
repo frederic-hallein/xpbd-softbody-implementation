@@ -30,13 +30,6 @@ std::unique_ptr<Camera> Scene::createCamera(GLFWwindow* window, unsigned int scr
     );
 }
 
-// std::unique_ptr<Light> Scene::createLight()
-// {
-//     return std::make_unique<Light>(
-
-//     );
-// }
-
 std::unique_ptr<Object> Scene::createObject(const ObjectConfig& config)
 {
     logger::info("  - Creating '{}' object...", config.name);
@@ -130,10 +123,14 @@ void Scene::loadSceneConfig(const std::string& configPath)
     logger::info(" - Creating '{}' scene objects...", sceneConfig.name);
     for (const auto& config : sceneConfig.objects) {
         auto obj = createObject(config);
-        if (obj) {
-            m_objects.push_back(std::move(obj));
-        } else {
+        if (!obj) {
             logger::error("Failed to create object: {}", config.name);
+            continue;
+        }
+
+        m_objects.push_back(std::move(obj));
+        if (config.name == "Light") {
+            m_light = m_objects.back().get();
         }
     }
 
@@ -209,7 +206,7 @@ Scene::Scene(
 )
     :   m_name(""),
         m_camera(createCamera(window, screenWidth, screenHeight)),
-        // m_light(createLight()),
+        m_light(nullptr),
         m_shaderManager(shaderManager),
         m_meshManager(meshManager),
         m_textureManager(textureManager),
@@ -590,7 +587,7 @@ void Scene::render()
 
     for (const auto& object : m_objects)
     {
-        object->render();
+        object->render(m_light);
     }
 
 }
