@@ -587,7 +587,7 @@ void Scene::render()
 
     for (const auto& object : m_objects)
     {
-        object->render(m_light);
+        object->render(m_light, m_camera->getPosition());
     }
 
 }

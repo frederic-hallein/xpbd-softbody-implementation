@@ -120,7 +120,7 @@ void Object::setProjectionViewUniforms(const Shader& shader)
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(m_transform.getViewMatrix()));
 }
 
-void Object::render(Object* light)
+void Object::render(Object* light, const glm::vec3& cameraPosition)
 {
     glPolygonMode(GL_FRONT_AND_BACK, m_polygonMode);
 
@@ -128,6 +128,7 @@ void Object::render(Object* light)
     m_shader.setVec3("objectColor", m_color);
     m_shader.setVec3("lightColor", light->getColor());
     m_shader.setVec3("lightPos", light->getTransform().getPosition());
+    m_shader.setVec3("viewPos", cameraPosition);
     if (m_texture) {
         m_texture->bind();
         m_shader.setInt("ourTexture", 0); // NOTE : 0 for single texture

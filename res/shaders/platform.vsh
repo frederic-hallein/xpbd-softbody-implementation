@@ -1,14 +1,19 @@
 #version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
+
+out vec3 FragPos;
+out vec3 Normal;
+out vec2 TexCoord;
 
 uniform mat4 view;
 uniform mat4 projection;
 
-flat out vec3 vNormal; // Pass normal to fragment shader (flat shading)
-
 void main()
 {
-    gl_Position = projection * view * vec4(aPos, 1.0);
-    vNormal = aNormal;
+    gl_Position = projection * view * vec4(aPos, 1.0f);
+    FragPos = aPos;
+    Normal = aNormal;
+    TexCoord = aTexCoord * vec2(1.0f, 1.0f);
 }

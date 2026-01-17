@@ -34,7 +34,7 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [1.0, 0.0, 0.0]
       isStatic: false
 
     # Additional spheres
@@ -46,7 +46,7 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [0.0, 1.0, 1.0]
       isStatic: false
 
     - name: Sphere
@@ -57,7 +57,7 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [1.0, 1.0, 0.0]
       isStatic: false
 
     - name: Sphere
@@ -68,7 +68,7 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [0.0, 1.0, 0.0]
       isStatic: false
 
     - name: Sphere
@@ -79,7 +79,7 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [0.0, 0.0, 1.0]
       isStatic: false
 
     - name: Sphere
@@ -90,7 +90,7 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [1.0, 0.0, 1.0]
       isStatic: false
 
     - name: Sphere
@@ -101,7 +101,7 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [1.0, 0.0, 0.0]
       isStatic: false
 
     - name: Sphere
@@ -112,7 +112,7 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [0.0, 1.0, 0.0]
       isStatic: false
 
     - name: Sphere
@@ -123,5 +123,5 @@ scene:
       shader: sphere
       mesh: sphere
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [0.0, 0.0, 1.0]
       isStatic: false

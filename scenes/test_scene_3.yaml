@@ -44,7 +44,7 @@ scene:
       shader: sphere
       mesh: cone
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [1.0, 0.0, 1.0]
       isStatic: true
 
     - name: Torus
@@ -55,5 +55,5 @@ scene:
       shader: sphere
       mesh: torus
       texture: ""
-      color: [1.0, 1.0, 1.0]
+      color: [0.0, 1.0, 0.0]
       isStatic: false
