@@ -10,9 +10,9 @@ Shader Object::s_vertexNormalShader;
 Shader Object::s_faceNormalShader;
 
 
+// TODO : refactor
 std::unique_ptr<Camera> Scene::createCamera(GLFWwindow* window, unsigned int screenWidth, unsigned int screenHeight)
 {
-    // TODO : pass as parameters
     float FOV = 45.0f;
     float nearPlane = 0.1f;
     float farPlane = 300.0f;
@@ -28,6 +28,12 @@ std::unique_ptr<Camera> Scene::createCamera(GLFWwindow* window, unsigned int scr
         farPlane,
         window
     );
+}
+
+// TODO : refactor
+std::unique_ptr<Light> Scene::createLight()
+{
+    return std::make_unique<Light>(glm::vec3(-10.0f, 20.0f, 0.0f));
 }
 
 std::unique_ptr<Object> Scene::createObject(const ObjectConfig& config)
@@ -129,9 +135,7 @@ void Scene::loadSceneConfig(const std::string& configPath)
         }
 
         m_objects.push_back(std::move(obj));
-        if (config.name == "Light") {
-            m_light = m_objects.back().get();
-        }
+
     }
 
     setupEnvCollisionConstraints(); // TODO : move
@@ -206,7 +210,7 @@ Scene::Scene(
 )
     :   m_name(""),
         m_camera(createCamera(window, screenWidth, screenHeight)),
-        m_light(nullptr),
+        m_light(createLight()),
         m_shaderManager(shaderManager),
         m_meshManager(meshManager),
         m_textureManager(textureManager),
@@ -587,7 +591,7 @@ void Scene::render()
 
     for (const auto& object : m_objects)
     {
-        object->render(m_light, m_camera->getPosition());
+        object->render(m_light.get(), m_camera->getPosition());
     }
 
 }

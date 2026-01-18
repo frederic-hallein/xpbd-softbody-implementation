@@ -13,6 +13,7 @@
 #include "MeshManager.hpp"
 #include "TextureManager.hpp"
 #include "Camera.hpp"
+#include "Light.hpp"
 #include "Object.hpp"
 
 struct ObjectConfig
@@ -55,7 +56,7 @@ public:
 
     const std::string& getName() { return m_name; }
     Camera* getCamera() { return m_camera.get(); }
-    Object* getLight() { return m_light; }
+    Light* getLight() { return m_light.get(); }
     const std::vector<std::unique_ptr<Object>>& getObjects() const { return m_objects; }
 
     bool& enableDistanceConstraints() { return m_enableDistanceConstraints; }
@@ -96,6 +97,7 @@ public:
 
 private:
     std::unique_ptr<Camera> createCamera(GLFWwindow* window, unsigned int screenWidth, unsigned int screenHeight);
+    std::unique_ptr<Light> createLight();
 
     std::unique_ptr<Object> createObject(const ObjectConfig& config);
     SceneConfig parseSceneConfig(const YAML::Node& sceneYaml);
@@ -150,7 +152,7 @@ private:
     TextureManager* m_textureManager;
 
     std::unique_ptr<Camera> m_camera;
-    Object* m_light;
+    std::unique_ptr<Light> m_light;
 
     std::vector<std::unique_ptr<Object>> m_objects;
 

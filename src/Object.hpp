@@ -11,6 +11,7 @@
 #include "Transform.hpp"
 #include "Shader.hpp"
 #include "Mesh.hpp"
+#include "Light.hpp"
 #include "Texture.hpp"
 
 class Object
@@ -34,7 +35,7 @@ public:
 
     void update(float deltaTime);
     void updateTransformWithCOM();
-    void render(Object* light, const glm::vec3& cameraPosition);
+    void render(Light* light, const glm::vec3& cameraPosition);
 
     void setPolygonMode(GLenum mode) { m_polygonMode = mode; }
     GLenum getPolygonMode() const { return m_polygonMode; }

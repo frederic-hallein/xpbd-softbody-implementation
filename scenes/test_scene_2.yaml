@@ -13,18 +13,6 @@ scene:
       color: [1.0, 1.0, 1.0]
       isStatic: true
 
-    # Light
-    - name: Light
-      position: [-5.0, 10.0, 0.0]
-      rotationAxis: [0.0, 0.0, 1.0]
-      rotationDeg: 0.0
-      scale: [0.5, 0.5, 0.5]
-      shader: light
-      mesh: cube
-      texture: ""
-      color: [1.0, 1.0, 1.0]
-      isStatic: true
-
     # Sphere
     - name: Sphere
       position: [0.0, 15.0, 0.0]
