@@ -181,10 +181,11 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
     float& alpha = scene.getAlpha();
+    float alpha_min = 0.0f;
     float alpha_max = 0.1f;
     ImGui::Text("Compliance:");
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    ImGui::SliderFloat("##Compliance", &alpha, 0.001, alpha_max);
+    ImGui::SliderFloat("##Compliance", &alpha, alpha_min, alpha_max);
     ImGui::PopItemWidth();
 
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
@@ -193,7 +194,7 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     float beta_max = 10.0f;
     ImGui::Text("Damping:");
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    ImGui::SliderFloat("##Damping", &beta, 1.0f, beta_max);
+    ImGui::SliderFloat("##Damping", &beta, 0.0f, beta_max);
     ImGui::PopItemWidth();
     ImGui::Separator();
 

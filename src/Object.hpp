@@ -65,6 +65,8 @@ private:
     bool m_isStatic;
     GLenum m_polygonMode;
 
+    bool m_enablevertexNormalShader;
+    bool m_enableFaceNormalShader;
 
     std::vector<Transform> m_initialVertexTransforms;
     std::vector<Transform> m_vertexTransforms;

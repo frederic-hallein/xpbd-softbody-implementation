@@ -19,7 +19,9 @@ Object::Object(
       m_texture(texture),
       m_color(color),
       m_isStatic(isStatic),
-      m_polygonMode(GL_FILL)
+      m_polygonMode(GL_FILL),
+      m_enablevertexNormalShader(false),
+      m_enableFaceNormalShader(false)
 {
 
     std::vector<glm::vec3>& positions = m_mesh.getPositions();
@@ -141,13 +143,17 @@ void Object::render(Light* light, const glm::vec3& cameraPosition)
     setProjectionViewUniforms(m_shader);
     m_mesh.draw();
 
-    // draw vertex normals
-    s_vertexNormalShader.useProgram();
-    setProjectionViewUniforms(s_vertexNormalShader);
-    m_mesh.drawVertexNormals();
+    // TODO : modify in ImGUI
+    if (m_enableFaceNormalShader) {
+        s_faceNormalShader.useProgram();
+        setProjectionViewUniforms(s_faceNormalShader);
+        m_mesh.drawFaceNormals();
+    }
 
-    // draw face normals
-    s_faceNormalShader.useProgram();
-    setProjectionViewUniforms(s_faceNormalShader);
-    m_mesh.drawFaceNormals();
+    // TODO : modify in ImGUI
+    if (m_enablevertexNormalShader) {
+        s_vertexNormalShader.useProgram();
+        setProjectionViewUniforms(s_vertexNormalShader);
+        m_mesh.drawVertexNormals();
+    }
 }

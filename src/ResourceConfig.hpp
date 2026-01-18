@@ -24,12 +24,13 @@ static constexpr std::array<std::tuple<std::string_view, std::string_view, std::
 }};
 
 // Mesh configuration
-static constexpr std::array<std::pair<std::string_view, std::string_view>, 5> MESH_DATA = {{
+static constexpr std::array<std::pair<std::string_view, std::string_view>, 6> MESH_DATA = {{
     {"surface", "surface.obj"},
     {"cube", "cube.obj"},
     {"sphere", "sphere.obj"},
     {"cone", "cone.obj"},
     {"torus", "torus.obj"},
+    {"bunny", "bunny.obj"},
 }};
 
 // Texture configuration
