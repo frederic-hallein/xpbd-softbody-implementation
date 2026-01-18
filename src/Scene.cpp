@@ -11,22 +11,22 @@ Shader Object::s_faceNormalShader;
 
 
 // TODO : refactor
-std::unique_ptr<Camera> Scene::createCamera(GLFWwindow* window, unsigned int screenWidth, unsigned int screenHeight)
+std::unique_ptr<Camera> Scene::createCamera()
 {
     float FOV = 45.0f;
     float nearPlane = 0.1f;
     float farPlane = 300.0f;
-    float aspectRatio = static_cast<float>(screenWidth) / static_cast<float>(screenHeight);
+    float aspectRatio = static_cast<float>(m_screenWidth) / static_cast<float>(m_screenHeight);
 
     return std::make_unique<Camera>(
-        glm::vec3(0.0f, 20.0f, 50.0f),
+        glm::vec3(0.0f, 5.0f, 20.0f),
         glm::vec3(0.0f, 0.0f, -1.0f),
         glm::vec3(0.0f, 1.0f, 0.0f),
         FOV,
         aspectRatio,
         nearPlane,
         farPlane,
-        window
+        m_window
     );
 }
 
@@ -209,7 +209,10 @@ Scene::Scene(
     TextureManager* textureManager
 )
     :   m_name(""),
-        m_camera(createCamera(window, screenWidth, screenHeight)),
+        m_window(window),
+        m_screenWidth(screenWidth),
+        m_screenHeight(screenHeight),
+        m_camera(createCamera()),
         m_light(createLight()),
         m_shaderManager(shaderManager),
         m_meshManager(meshManager),
@@ -465,14 +468,14 @@ void Scene::applyXPBD(
         // Environment Collision constraints
         if (m_enableEnvCollisionConstraints)
         {
-            solveEnvCollisionConstraints(
-                x,
-                posDiff,
-                M,
-                alphaTilde,
-                gamma,
-                perEnvCollisionConstraints
-            );
+            // solveEnvCollisionConstraints(
+            //     x,
+            //     posDiff,
+            //     M,
+            //     alphaTilde,
+            //     gamma,
+            //     perEnvCollisionConstraints
+            // );
         }
 
         // Distance constraints
@@ -514,7 +517,6 @@ void Scene::applyXPBD(
     }
 }
 
-// TODO : maybe exclude ground from XPBD objects
 void Scene::applyGroundCollision(Object& object)
 {
     auto& vertexTransforms = object.getVertexTransforms();
@@ -533,7 +535,15 @@ void Scene::applyGroundCollision(Object& object)
     }
 }
 
-void Scene::updateObjectPhysics(Object& object, float deltaTime)
+// TODO : check for object intersection using Möller-Trumbore ray-triangle intersection algorithm
+// if intersection with triangle, construct 3 distanceConstraints and call solveDistanceConstraints()
+// for it
+void Scene::updateObjectPhysics(
+    Object& object,
+    float deltaTime,
+    const glm::vec3& cameraPos,
+    const glm::vec3& rayDir
+)
 {
     if (!object.isStatic())
     {
@@ -549,7 +559,11 @@ void Scene::updateObjectTransform(Object& object)
     transform.setView(*m_camera);
 }
 
-void Scene::updateObjects(float deltaTime)
+void Scene::updateObjects(
+    float deltaTime,
+    const glm::vec3& cameraPos,
+    const glm::vec3& rayDir
+)
 {
     std::vector<std::future<void>> futures;
     futures.reserve(m_objects.size());
@@ -557,10 +571,10 @@ void Scene::updateObjects(float deltaTime)
     for (size_t i = 0; i < m_objects.size(); ++i)
     {
         futures.push_back(
-            std::async(std::launch::async, [this, i, deltaTime]() {
+            std::async(std::launch::async, [this, i, deltaTime, cameraPos, rayDir]() {
                 auto& object = m_objects[i];
                 updateObjectTransform(*object);
-                updateObjectPhysics(*object, deltaTime);
+                updateObjectPhysics(*object, deltaTime, cameraPos, rayDir);
                 object->update(deltaTime);
             })
         );
@@ -571,11 +585,17 @@ void Scene::updateObjects(float deltaTime)
     }
 }
 
-// TODO : pause simulation for non-active scenes
 void Scene::update(float deltaTime)
 {
     m_camera->setDeltaTime(deltaTime);
-    updateObjects(deltaTime);
+
+    double mouseX, mouseY;
+    glfwGetCursorPos(m_window, &mouseX, &mouseY);
+    glm::vec3 rayDir = m_camera->getRayDirection(mouseX, mouseY, m_screenWidth, m_screenHeight);
+    glm::vec3 cameraPos = m_camera->getPosition();
+    // logger::debug("CAMERA DIR: {}, {}, {}", rayDir[0], rayDir[1], rayDir[2]);
+
+    updateObjects(deltaTime, cameraPos, rayDir);
 }
 
 void Scene::render()

@@ -31,6 +31,10 @@ public:
 
     bool isDragging()              const { return m_isDragging; }
 
+    glm::mat4 getProjectionMatrix() const;
+    glm::mat4 getViewMatrix() const;
+    glm::vec3 getRayDirection(double mouseX, double mouseY, unsigned int screenWidth, unsigned int screenHeight) const;
+
     void setPosition(const glm::vec3& position) { m_cameraPos = position; }
     void setDeltaTime(float deltaTime) { m_deltaTime = deltaTime; }
     void setDragging(bool dragging) { m_isDragging = dragging; }

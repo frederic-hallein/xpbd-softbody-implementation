@@ -96,7 +96,7 @@ public:
     float& getOverpressureFactor() { return m_k; }
 
 private:
-    std::unique_ptr<Camera> createCamera(GLFWwindow* window, unsigned int screenWidth, unsigned int screenHeight);
+    std::unique_ptr<Camera> createCamera();
     std::unique_ptr<Light> createLight();
 
     std::unique_ptr<Object> createObject(const ObjectConfig& config);
@@ -141,11 +141,14 @@ private:
     void applyGroundCollision(Object& object);
 
     void updateObjectTransform(Object& object);
-    void updateObjectPhysics(Object& object, float deltaTime);
-    void updateObjects(float deltaTime);
+    void updateObjectPhysics(Object& object, float deltaTime, const glm::vec3& cameraPos, const glm::vec3& rayDir);
+    void updateObjects(float deltaTime, const glm::vec3& cameraPos, const glm::vec3& rayDir);
 
 private:
     std::string m_name;
+    GLFWwindow* m_window;
+    unsigned int m_screenWidth;
+    unsigned int m_screenHeight;
 
     ShaderManager* m_shaderManager;
     MeshManager* m_meshManager;
