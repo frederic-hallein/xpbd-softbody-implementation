@@ -9,10 +9,8 @@
 Shader Object::s_vertexNormalShader;
 Shader Object::s_faceNormalShader;
 
-
 // TODO : refactor
-std::unique_ptr<Camera> Scene::createCamera()
-{
+std::unique_ptr<Camera> Scene::createCamera() {
     float FOV = 45.0f;
     float nearPlane = 0.1f;
     float farPlane = 300.0f;
@@ -29,12 +27,13 @@ std::unique_ptr<Camera> Scene::createCamera()
 }
 
 // TODO : refactor
-std::unique_ptr<Light> Scene::createLight()
-{
+std::unique_ptr<Light> Scene::createLight() {
     return std::make_unique<Light>(glm::vec3(-10.0f, 20.0f, 0.0f));
 }
 
-std::unique_ptr<Object> Scene::createObject(const ObjectConfig& config)
+std::unique_ptr<Object> Scene::createObject(
+    const ObjectConfig& config
+)
 {
     logger::info("  - Creating '{}' object...", config.name);
     Transform transform;
@@ -95,7 +94,9 @@ std::unique_ptr<Object> Scene::createObject(const ObjectConfig& config)
     }
 }
 
-void Scene::loadSceneConfig(const std::string& configPath)
+void Scene::loadSceneConfig(
+    const std::string& configPath
+)
 {
     std::ifstream configFile(configPath);
     if (!configFile.is_open()) {
@@ -139,7 +140,9 @@ void Scene::loadSceneConfig(const std::string& configPath)
     setupEnvCollisionConstraints(); // TODO : move
 }
 
-SceneConfig Scene::parseSceneConfig(const YAML::Node& sceneYaml)
+SceneConfig Scene::parseSceneConfig(
+    const YAML::Node& sceneYaml
+)
 {
     SceneConfig config;
     config.name = sceneYaml["scene"]["name"].as<std::string>();
@@ -180,10 +183,8 @@ SceneConfig Scene::parseSceneConfig(const YAML::Node& sceneYaml)
     return config;
 }
 
-void Scene::setupEnvCollisionConstraints()
-{
-    for (const auto& obj : m_objects)
-    {
+void Scene::setupEnvCollisionConstraints() {
+    for (const auto& obj : m_objects) {
         if (obj->isStatic()) continue;
 
         std::vector<Object*> candidateObjects;
@@ -236,8 +237,7 @@ void Scene::applyGravity(
     float deltaTime
 )
 {
-    for (auto& vertexTransform : object.getVertexTransforms())
-    {
+    for (auto& vertexTransform : object.getVertexTransforms()) {
         vertexTransform.setAcceleration(m_gravitationalAcceleration);
     }
 }
@@ -274,8 +274,7 @@ void Scene::setDeltaX(
 )
 {
     std::fill(deltaX.begin(), deltaX.end(), glm::vec3(0.0f));
-    for (size_t i = 0; i < constraintVertices.size(); ++i)
-    {
+    for (size_t i = 0; i < constraintVertices.size(); ++i) {
         unsigned int v = constraintVertices[i];
         float w = 1.0f / M[v];
         deltaX[v] = deltaLambda * w * gradC_j[v];
@@ -292,6 +291,7 @@ void Scene::updateConstraintPositions(
     }
 }
 
+/* Möller–Trumbore intersection algorithm (See Wikipedia) */
 std::optional<glm::vec3> Scene::rayIntersectsTriangle(
     const glm::vec3& rayOrigin,
     const glm::vec3& rayDirection,
@@ -310,57 +310,56 @@ std::optional<glm::vec3> Scene::rayIntersectsTriangle(
     glm::vec3 rayCrossEdge2 = glm::cross(rayDirection, edge2);
     float determinant = glm::dot(edge1, rayCrossEdge2);
 
-    if (determinant > -epsilon && determinant < epsilon)
+    if (determinant > -epsilon && determinant < epsilon) {
         return {};
+    }
 
     float inverseDeterminant = 1.0f / determinant;
     glm::vec3 rayOriginToV1 = rayOrigin - v1;
     float u = inverseDeterminant * glm::dot(rayOriginToV1, rayCrossEdge2);
 
-    if ((u < 0.0f && glm::abs(u) > epsilon) || (u > 1.0f && glm::abs(u - 1.0f) > epsilon))
+    if ((u < 0.0f && glm::abs(u) > epsilon) || (u > 1.0f && glm::abs(u - 1.0f) > epsilon)) {
         return {};
+    }
 
     glm::vec3 rayOriginToV1CrossEdge1 = glm::cross(rayOriginToV1, edge1);
     float v = inverseDeterminant * glm::dot(rayDirection, rayOriginToV1CrossEdge1);
 
-    if ((v < 0.0f && glm::abs(v) > epsilon) || (u + v > 1.0f && glm::abs(u + v - 1.0f) > epsilon))
+    if ((v < 0.0f && glm::abs(v) > epsilon) || (u + v > 1.0f && glm::abs(u + v - 1.0f) > epsilon)) {
         return {};
+    }
 
     float t = inverseDeterminant * glm::dot(edge2, rayOriginToV1CrossEdge1);
-
-    if (t > epsilon)
-    {
+    if (t > epsilon) {
         return glm::vec3(rayOrigin + rayDirection * t);
     }
+
     return {};
 }
 
-Scene::PickResult Scene::pickObject(const glm::vec3& rayOrigin, const glm::vec3& rayDir)
+Scene::PickResult Scene::pickObject(
+    const glm::vec3& rayOrigin,
+    const glm::vec3& rayDir
+)
 {
     PickResult result;
     float closestDistance = std::numeric_limits<float>::max();
 
-    for (const auto& objPtr : m_objects)
-    {
+    for (const auto& objPtr : m_objects) {
         if (objPtr->isStatic()) continue;
 
-        auto& mesh = objPtr->getMesh();
         auto& vertexTransforms = objPtr->getVertexTransforms();
-        const auto& triangles = mesh.mouseDistanceConstraints.triangles;
-
-        for (const auto& triangle : triangles)
-        {
+        const auto& triangles = objPtr->getMesh().mouseDistanceConstraints.triangles;
+        for (const auto& triangle : triangles) {
             auto intersection = rayIntersectsTriangle(
                 rayOrigin,
                 rayDir,
                 triangle,
                 vertexTransforms
             );
-            if (intersection)
-            {
+            if (intersection) {
                 float dist = glm::distance(rayOrigin, intersection.value());
-                if (dist < closestDistance)
-                {
+                if (dist < closestDistance) {
                     closestDistance = dist;
                     result.object = objPtr.get();
                     result.triangle = triangle;
@@ -381,7 +380,6 @@ void Scene::createMouseConstraints(
     if (m_activeMouseConstraint.isActive) return;
     if (!pick.hit) return;
 
-    auto& mesh = pick.object->getMesh();
     auto& vertexTransforms = pick.object->getVertexTransforms();
 
     m_activeMouseConstraint.isActive = true;
@@ -389,49 +387,43 @@ void Scene::createMouseConstraints(
     m_activeMouseConstraint.triangle = pick.triangle;
     m_activeMouseConstraint.intersectionPoint = pick.intersection;
 
-    m_activeMouseConstraint.initialDistances[0] = glm::distance(pick.intersection, vertexTransforms[pick.triangle.v1].getPosition());
-    m_activeMouseConstraint.initialDistances[1] = glm::distance(pick.intersection, vertexTransforms[pick.triangle.v2].getPosition());
-    m_activeMouseConstraint.initialDistances[2] = glm::distance(pick.intersection, vertexTransforms[pick.triangle.v3].getPosition());
+    m_activeMouseConstraint.initialDistances[0] = glm::distance(
+        pick.intersection,
+        vertexTransforms[pick.triangle.v1].getPosition()
+    );
+    m_activeMouseConstraint.initialDistances[1] = glm::distance(
+        pick.intersection,
+        vertexTransforms[pick.triangle.v2].getPosition()
+    );
+    m_activeMouseConstraint.initialDistances[2] = glm::distance(
+        pick.intersection,
+        vertexTransforms[pick.triangle.v3].getPosition()
+    );
 
-    logger::info("Mouse constraint created for triangle ({}, {}, {})",
-        pick.triangle.v1, pick.triangle.v2, pick.triangle.v3);
+    logger::debug("Mouse constraint created for triangle ({}, {}, {})",
+        pick.triangle.v1,
+        pick.triangle.v2,
+        pick.triangle.v3
+    );
 }
 
-// TODO : fixme
 void Scene::updateMouseConstraints(
     const glm::vec3& cameraPos,
     const glm::vec3& rayDir
 )
 {
-    if (!m_activeMouseConstraint.isActive) return;
+    if (!m_activeMouseConstraint.isActive) {
+        return;
+    }
 
-    auto& vertexTransforms = m_activeMouseConstraint.object->getVertexTransforms();
-    const auto& triangle = m_activeMouseConstraint.triangle;
-
-    // Always use plane projection for stability
-    glm::vec3 v0 = vertexTransforms[triangle.v1].getPosition();
-    glm::vec3 v1 = vertexTransforms[triangle.v2].getPosition();
-    glm::vec3 v2 = vertexTransforms[triangle.v3].getPosition();
-
-    glm::vec3 edge1 = v1 - v0;
-    glm::vec3 edge2 = v2 - v0;
-    glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
-
-    // Project ray onto plane
-    float denom = glm::dot(normal, rayDir);
-    if (glm::abs(denom) > 1e-6f)
-    {
-        float t = glm::dot(v0 - cameraPos, normal) / denom;
-        if (t > 0.0f)
-        {
-            glm::vec3 planeIntersection = cameraPos + rayDir * t;
-
-            // Only update if the new position is reasonable (within some distance)
-            float distanceFromPrevious = glm::distance(planeIntersection, m_activeMouseConstraint.intersectionPoint);
-            if (distanceFromPrevious < 5.0f)  // Clamp large jumps
-            {
-                m_activeMouseConstraint.intersectionPoint = planeIntersection;
-            }
+    const glm::vec3& cameraFront = m_camera->getFront();
+    const glm::vec3& planePoint = m_activeMouseConstraint.intersectionPoint;
+    float denom = glm::dot(cameraFront, rayDir);
+    if (glm::abs(denom) > 1e-6f) {
+        float t = glm::dot(planePoint - cameraPos, cameraFront) / denom;
+        if (t > 0.0f) {
+            glm::vec3 rayPlaneIntersection = cameraPos + rayDir * t;
+            m_activeMouseConstraint.intersectionPoint = rayPlaneIntersection;
         }
     }
 }
@@ -448,7 +440,7 @@ void Scene::solveMouseConstraints(
     glm::vec3 intersectionPos = constraint.intersectionPoint;
     std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
 
-    constexpr float mouseAlpha = 0.005f;
+    constexpr float mouseAlpha = 0.0f;
     constexpr float mouseBeta = 1.0f;
 
     float mouseAlphaTilde = mouseAlpha / (deltaTime_s * deltaTime_s);
@@ -462,8 +454,7 @@ void Scene::solveMouseConstraints(
     };
 
     std::array<unsigned int, 1> vertex;
-    for (int i = 0; i < 3; ++i)
-    {
+    for (int i = 0; i < 3; ++i) {
         unsigned int v = triangleVertices[i];
 
         float d_0 = constraint.initialDistances[i];
@@ -472,16 +463,21 @@ void Scene::solveMouseConstraints(
         std::vector<glm::vec3> gradC_j(x.size(), glm::vec3(0.0f));
         glm::vec3 diff = x[v] - intersectionPos;
         float dist = glm::distance(x[v], intersectionPos);
-        if (dist > 1e-6f)
-        {
-            gradC_j[v] = glm::normalize(diff);
-        }
+        gradC_j[v] = glm::normalize(diff);
 
         vertex[0] = v;
-        float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, vertex, M, mouseAlphaTilde, mouseGamma);
+        float deltaLambda = calculateDeltaLambda(
+            C_j,
+            gradC_j,
+            posDiff,
+            vertex,
+            M,
+            mouseAlphaTilde,
+            mouseGamma
+        );
         setDeltaX(deltaX, deltaLambda, M, gradC_j, vertex);
+        updateConstraintPositions(x, deltaX);
     }
-    updateConstraintPositions(x, deltaX);
 }
 
 void Scene::solveDistanceConstraints(
@@ -494,14 +490,21 @@ void Scene::solveDistanceConstraints(
 )
 {
     std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
-    for (size_t j = 0; j < distanceConstraints.edges.size(); ++j)
-    {
+    for (size_t j = 0; j < distanceConstraints.edges.size(); ++j) {
         float C_j = distanceConstraints.C[j](x);
         std::vector<glm::vec3> gradC_j = distanceConstraints.gradC[j](x);
         const auto& edge = distanceConstraints.edges[j];
         const std::array<unsigned int, 2> constraintVertices = { edge.v1, edge.v2 };
 
-        float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
+        float deltaLambda = calculateDeltaLambda(
+            C_j,
+            gradC_j,
+            posDiff,
+            constraintVertices,
+            M,
+            alphaTilde,
+            gamma
+        );
         setDeltaX(deltaX, deltaLambda, M, gradC_j, constraintVertices);
         updateConstraintPositions(x, deltaX);
     }
@@ -520,14 +523,21 @@ void Scene::solveVolumeConstraints(
     std::vector<glm::vec3> gradC_j = volumeConstraints.gradC[0](x);
 
     std::vector<unsigned int> constraintVertices;
-    for (const auto& tri : volumeConstraints.triangles)
-    {
+    for (const auto& tri : volumeConstraints.triangles) {
         constraintVertices.push_back(tri.v1);
         constraintVertices.push_back(tri.v2);
         constraintVertices.push_back(tri.v3);
     }
 
-    float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
+    float deltaLambda = calculateDeltaLambda(
+        C_j,
+        gradC_j,
+        posDiff,
+        constraintVertices,
+        M,
+        alphaTilde,
+        gamma
+    );
     std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
     setDeltaX(deltaX, deltaLambda, M, gradC_j, constraintVertices);
     updateConstraintPositions(x, deltaX);
@@ -626,10 +636,12 @@ void Scene::applyXPBD(
     float betaTilde  = (deltaTime_s * deltaTime_s) * m_beta;
     float gamma      = (alphaTilde * betaTilde) / deltaTime_s;
 
-    while (subStep < n + 1)
-    {
-        for (size_t i = 0; i < numVerts; ++i)
-        {
+    if (m_activeMouseConstraint.object == &object && m_activeMouseConstraint.isActive) {
+        updateMouseConstraints(cameraPos, rayDir);
+    }
+
+    while (subStep < n + 1) {
+        for (size_t i = 0; i < numVerts; ++i) {
             const Transform& vt = vertexTransforms[i];
             p[i] = vt.getPosition();
             v[i] = vt.getVelocity() + deltaTime_s * vt.getAcceleration();
@@ -637,9 +649,8 @@ void Scene::applyXPBD(
             posDiff[i] = x[i] - p[i];
         }
 
-        // Solve mouse constraints if active
-        if (m_activeMouseConstraint.isActive)
-        {
+        // Solve mouse constraints if active and
+        if (m_activeMouseConstraint.object == &object && m_activeMouseConstraint.isActive) {
             solveMouseConstraints(
                 x,
                 posDiff,
@@ -650,8 +661,7 @@ void Scene::applyXPBD(
 
         // TODO : fixme
         // Environment Collision constraints
-        if (m_enableEnvCollisionConstraints)
-        {
+        if (m_enableEnvCollisionConstraints) {
             // solveEnvCollisionConstraints(
             //     x,
             //     posDiff,
@@ -663,8 +673,7 @@ void Scene::applyXPBD(
         }
 
         // Distance constraints
-        if (m_enableDistanceConstraints)
-        {
+        if (m_enableDistanceConstraints) {
             solveDistanceConstraints(
                 x,
                 posDiff,
@@ -676,8 +685,7 @@ void Scene::applyXPBD(
         }
 
         // Volume constraints
-        if (m_enableVolumeConstraints)
-        {
+        if (m_enableVolumeConstraints) {
             solveVolumeConstraints(
                 x,
                 posDiff,
@@ -689,8 +697,7 @@ void Scene::applyXPBD(
         }
 
         // Update positions and velocities
-        for (size_t i = 0; i < numVerts; ++i)
-        {
+        for (size_t i = 0; i < numVerts; ++i) {
             Transform& vt = vertexTransforms[i];
             glm::vec3 newV = (x[i] - p[i]) / deltaTime_s;
             vt.setPosition(x[i]);
@@ -701,14 +708,11 @@ void Scene::applyXPBD(
     }
 }
 
-void Scene::applyGroundCollision(Object& object)
-{
+void Scene::applyGroundCollision(Object& object) {
     auto& vertexTransforms = object.getVertexTransforms();
-    for (auto& vertexTransform : vertexTransforms)
-    {
+    for (auto& vertexTransform : vertexTransforms) {
         glm::vec3 pos = vertexTransform.getPosition();
-        if (pos.y < m_groundLevel)
-        {
+        if (pos.y < m_groundLevel) {
             pos.y = m_groundLevel;
             vertexTransform.setPosition(pos);
 
@@ -726,16 +730,14 @@ void Scene::updateObjectPhysics(
     const glm::vec3& rayDir
 )
 {
-    if (!object.isStatic())
-    {
+    if (!object.isStatic()) {
         applyGravity(object, deltaTime);
         applyXPBD(object, deltaTime, cameraPos, rayDir);
         applyGroundCollision(object);
     }
 }
 
-void Scene::updateObjectTransform(Object& object)
-{
+void Scene::updateObjectTransform(Object& object) {
     Transform& transform = object.getTransform();
     transform.setView(*m_camera);
 }
@@ -749,10 +751,9 @@ void Scene::updateObjects(
     std::vector<std::future<void>> futures;
     futures.reserve(m_objects.size());
 
-    for (size_t i = 0; i < m_objects.size(); ++i)
-    {
+    for (size_t i = 0; i < m_objects.size(); ++i) {
         futures.push_back(
-            std::async(std::launch::async, [this, i, deltaTime, cameraPos, rayDir]() {
+            std::async(std::launch::async, [this, i, deltaTime, cameraPos, rayDir]() -> void {
                 auto& object = m_objects[i];
                 updateObjectTransform(*object);
                 updateObjectPhysics(*object, deltaTime, cameraPos, rayDir);
@@ -766,39 +767,34 @@ void Scene::updateObjects(
     }
 }
 
-void Scene::update(float deltaTime)
-{
+void Scene::update(float deltaTime) {
     m_camera->setDeltaTime(deltaTime);
 
     double mouseX, mouseY;
     glfwGetCursorPos(m_window, &mouseX, &mouseY);
     glm::vec3 rayDir = m_camera->getRayDirection(mouseX, mouseY, m_screenWidth, m_screenHeight);
     glm::vec3 cameraPos = m_camera->getPosition();
-    // logger::debug("CAMERA DIR: {}, {}, {}", rayDir[0], rayDir[1], rayDir[2]);
 
     updateObjects(deltaTime, cameraPos, rayDir);
 }
 
-void Scene::render()
-{
+void Scene::render() {
     glEnable(GL_DEPTH_TEST);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // TODO : use skybox instead
+    glClearColor(0.53f, 0.81f, 0.92f, 1.0f); // TODO : use skybox instead
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (const auto& object : m_objects)
-    {
+    for (const auto& object : m_objects) {
         object->render(m_light.get(), m_camera->getPosition());
     }
 
 }
 
-void Scene::clear()
-{
+void Scene::clear() {
     logger::info(" - Clearing '{}' scene...", m_name);
     m_textureManager->deleteAllResources();
     m_meshManager->deleteAllResources();

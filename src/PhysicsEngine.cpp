@@ -1,5 +1,3 @@
-// #include <backends/imgui_impl_glfw.h>
-
 #include "logger.hpp"
 #include "ResourceConfig.hpp"
 #include "PhysicsEngine.hpp"
@@ -7,8 +5,7 @@
 const std::string RESOURCE_PATH = "../res/";
 
 
-std::unique_ptr<ShaderManager> PhysicsEngine::loadShaders()
-{
+std::unique_ptr<ShaderManager> PhysicsEngine::loadShaders() {
     logger::info(" - Loading shaders...");
     auto shaderManager = std::make_unique<ShaderManager>();
     std::vector<std::unique_ptr<Shader>> shaders;
@@ -29,8 +26,7 @@ std::unique_ptr<ShaderManager> PhysicsEngine::loadShaders()
     return shaderManager;
 }
 
-std::unique_ptr<MeshManager> PhysicsEngine::loadMeshes()
-{
+std::unique_ptr<MeshManager> PhysicsEngine::loadMeshes() {
     logger::info(" - Loading meshes...");
     auto meshManager = std::make_unique<MeshManager>();
     std::vector<std::unique_ptr<Mesh>> meshes;
@@ -50,8 +46,7 @@ std::unique_ptr<MeshManager> PhysicsEngine::loadMeshes()
     return meshManager;
 }
 
-std::unique_ptr<TextureManager> PhysicsEngine::loadTextures()
-{
+std::unique_ptr<TextureManager> PhysicsEngine::loadTextures() {
     logger::info(" - Loading textures...");
     auto textureManager = std::make_unique<TextureManager>();
     std::vector<std::unique_ptr<Texture>> textures;
@@ -71,8 +66,7 @@ std::unique_ptr<TextureManager> PhysicsEngine::loadTextures()
     return textureManager;
 }
 
-void PhysicsEngine::loadResources()
-{
+void PhysicsEngine::loadResources() {
     logger::info("Loading resources...");
     m_shaderManager = loadShaders();
     m_meshManager = loadMeshes();
@@ -146,14 +140,10 @@ PhysicsEngine::PhysicsEngine(
     m_sceneManager->switchScene(std::string(SCENE_LIST[0].first));
 };
 
-PhysicsEngine::~PhysicsEngine()
-{
-}
+PhysicsEngine::~PhysicsEngine() {}
 
-void PhysicsEngine::handleEvents()
-{
-    if (glfwWindowShouldClose(m_window))
-    {
+void PhysicsEngine::handleEvents() {
+    if (glfwWindowShouldClose(m_window)) {
         m_isRunning = false;
         logger::info("Closing {}...", m_engineName);
     }
@@ -180,7 +170,12 @@ void PhysicsEngine::processInput()
     Camera* camera = m_sceneManager->getCurrentCamera();
     if (!camera) return;
 
-    glm::vec3 rayDir = camera->getRayDirection(mouseX, mouseY, m_screenWidth, m_screenHeight);
+    glm::vec3 rayDir = camera->getRayDirection(
+        mouseX,
+        mouseY,
+        m_screenWidth,
+        m_screenHeight
+    );
     glm::vec3 cameraPos = camera->getPosition();
 
     auto pick = scene->pickObject(cameraPos, rayDir);
@@ -197,8 +192,7 @@ void PhysicsEngine::processInput()
     }
 }
 
-void PhysicsEngine::update()
-{
+void PhysicsEngine::update() {
     processInput();
     m_timer->startFrame();
 
@@ -208,8 +202,7 @@ void PhysicsEngine::update()
     }
 }
 
-void PhysicsEngine::render()
-{
+void PhysicsEngine::render() {
     Scene* currentScene = m_sceneManager->getCurrentScene();
     if (currentScene) {
         currentScene->render();
@@ -224,8 +217,7 @@ void PhysicsEngine::render()
     m_timer->capFrameRate(m_targetFPS);
 }
 
-void PhysicsEngine::close()
-{
+void PhysicsEngine::close() {
     m_debugWindow->close();
     m_sceneManager->clearScenes();
 
