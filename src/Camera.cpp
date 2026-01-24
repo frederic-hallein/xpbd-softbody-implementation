@@ -51,22 +51,14 @@ void Camera::updateOrbit()
 {
     // Clamp pitch to avoid flipping
     if (m_orbitPitch > glm::radians(89.0f)) m_orbitPitch = glm::radians(89.0f);
-    if (m_orbitPitch < glm::radians(-89.0f)) m_orbitPitch = glm::radians(-89.0f);
+    if (m_orbitPitch < glm::radians(0.5f)) m_orbitPitch = glm::radians(0.5f);
 
     m_cameraPos.x = m_orbitRadius * cos(m_orbitPitch) * sin(m_orbitYaw);
     m_cameraPos.y = m_orbitRadius * sin(m_orbitPitch);
     m_cameraPos.z = m_orbitRadius * cos(m_orbitPitch) * cos(m_orbitYaw);
 
-    // m_cameraFront = glm::normalize(glm::vec3(0.0f)-m_cameraPos);
-    // m_cameraRight = glm::normalize(glm::cross(m_cameraPos, m_cameraUp));
-    // // m_cameraUp    = glm::normalize(glm::cross(m_cameraPos, m_cameraRight));
-
     m_cameraFront = glm::normalize(glm::vec3(0.0f) - m_cameraPos);
-
-    // Use world up to calculate right vector
     m_cameraRight = glm::normalize(glm::cross(m_worldUp, m_cameraFront));
-
-    // Calculate camera up from right and front
     m_cameraUp = glm::normalize(glm::cross(m_cameraFront, m_cameraRight));
 
 }
@@ -82,6 +74,8 @@ void Camera::resetPosition()
 {
     m_cameraPos = m_originalCameraPos;
     m_cameraFront = glm::normalize(glm::vec3(0.0f) - m_cameraPos);
+    m_cameraRight = glm::normalize(glm::cross(m_worldUp, m_cameraFront));
+    m_cameraUp = glm::normalize(glm::cross(m_cameraFront, m_cameraRight));
     setOrbit();
 }
 

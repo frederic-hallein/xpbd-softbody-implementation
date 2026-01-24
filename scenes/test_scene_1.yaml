@@ -1,124 +1,101 @@
 scene:
   name: Test Scene 1
   objects:
-    # # Platform
-    # - name: Platform
-    #   position: [0.0, -0.5, 0.0]
-    #   rotationAxis: [0.0, 0.0, 1.0]
-    #   rotationDeg: 0.0
-    #   scale: [50.0, 0.5, 50.0]
-    #   shader: platform
-    #   mesh: cube
-    #   texture: ""
-    #   isStatic: true
-
-    # Ground
-    - name: Ground
+    - name: Surface
       position: [0.0, 0.0, 0.0]
       rotationAxis: [0.0, 0.0, 1.0]
       rotationDeg: 180.0
       scale: [1000.0, 1.0, 1000.0]
       shader: ground
       mesh: surface
-      texture: tile
+      texture: ""
       color: [1.0, 1.0, 1.0]
       isStatic: true
 
-    # - name: Bunny
-    #   position: [0.0, 0.0, 0.0]
-    #   rotationAxis: [0.0, 1.0, 1.0]
-    #   rotationDeg: 0.0
-    #   scale: [100.0, 100.0, 100.0]
-    #   shader: sphere
-    #   mesh: bunny
-    #   texture: ""
-    #   color: [1.0, 1.0, 1.0]
-    #   isStatic: false
-
     - name: Block
-      position: [0.0, 1.0, 0.0]
+      position: [0.0, 8.0, 0.0]
       rotationAxis: [0.7, 0.1, 0.6]
-      rotationDeg: 0.0
+      rotationDeg: 30.0
       scale: [1.0, 1.0, 1.0]
-      shader: dirtblock
+      shader: default
       mesh: cube
-      texture: dirtblock
-      color: [1.0, 1.0, 1.0]
+      texture: ""
+      color: [0.929, 0.443, 0.392]
       isStatic: false
 
-    # - name: Block
-    #   position: [2.9, 10.7, -8.3]
-    #   rotationAxis: [0.2, 0.8, 0.5]
-    #   rotationDeg: 33.0
-    #   scale: [1.0, 1.0, 1.0]
-    #   shader: dirtblock
-    #   mesh: cube
-    #   texture: dirtblock
-    #   color: [1.0, 1.0, 1.0]
-    #   isStatic: false
+    - name: Block
+      position: [2.9, 10.7, -8.3]
+      rotationAxis: [0.2, 0.8, 0.5]
+      rotationDeg: 33.0
+      scale: [1.0, 1.0, 1.0]
+      shader: default
+      mesh: cube
+      texture: ""
+      color: [0.369, 0.471, 0.290]
+      isStatic: false
 
-    # - name: Block
-    #   position: [-3.5, 13.9, 7.6]
-    #   rotationAxis: [0.5, 0.4, 0.7]
-    #   rotationDeg: 88.0
-    #   scale: [1.0, 1.0, 1.0]
-    #   shader: dirtblock
-    #   mesh: cube
-    #   texture: dirtblock
-    #   color: [1.0, 1.0, 1.0]
-    #   isStatic: false
+    - name: Block
+      position: [-3.5, 13.9, 7.6]
+      rotationAxis: [0.5, 0.4, 0.7]
+      rotationDeg: 88.0
+      scale: [1.0, 1.0, 1.0]
+      shader: default
+      mesh: cube
+      texture: ""
+      color: [0.949, 0.757, 0.427]
+      isStatic: false
 
-    # - name: Block
-    #   position: [7.1, 16.3, -6.2]
-    #   rotationAxis: [0.6, 0.3, 0.7]
-    #   rotationDeg: 54.0
-    #   scale: [1.0, 1.0, 1.0]
-    #   shader: dirtblock
-    #   mesh: cube
-    #   texture: dirtblock
-    #   color: [1.0, 1.0, 1.0]
-    #   isStatic: false
+    - name: Block
+      position: [7.1, 16.3, -6.2]
+      rotationAxis: [0.6, 0.3, 0.7]
+      rotationDeg: 54.0
+      scale: [1.0, 1.0, 1.0]
+      shader: default
+      mesh: cube
+      texture: ""
+      color: [0.082, 0.365, 0.506]
+      isStatic: false
 
-    # - name: Block
-    #   position: [-8.4, 14.8, 2.4]
-    #   rotationAxis: [0.4, 0.7, 0.5]
-    #   rotationDeg: 102.0
-    #   scale: [1.0, 1.0, 1.0]
-    #   shader: dirtblock
-    #   mesh: cube
-    #   texture: dirtblock
-    #   color: [1.0, 1.0, 1.0]
-    #   isStatic: false
+    - name: Block
+      position: [-8.4, 14.8, 2.4]
+      rotationAxis: [0.4, 0.7, 0.5]
+      rotationDeg: 102.0
+      scale: [1.0, 1.0, 1.0]
+      shader: default
+      mesh: cube
+      texture: ""
+      color: [0.227, 0.220, 0.451]
+      isStatic: false
 
-    # - name: Block
-    #   position: [5.7, 19.1, -1.9]
-    #   rotationAxis: [0.8, 0.2, 0.5]
-    #   rotationDeg: 76.0
-    #   scale: [1.0, 1.0, 1.0]
-    #   shader: dirtblock
-    #   mesh: cube
-    #   texture: dirtblock
-    #   color: [1.0, 1.0, 1.0]
-    #   isStatic: false
+    - name: Block
+      position: [5.7, 19.1, -1.9]
+      rotationAxis: [0.8, 0.2, 0.5]
+      rotationDeg: 76.0
+      scale: [1.0, 1.0, 1.0]
+      shader: default
+      mesh: cube
+      texture: ""
+      color: [0.949, 0.757, 0.427]
+      isStatic: false
 
-    # - name: Block
-    #   position: [-2.3, 11.6, 8.7]
-    #   rotationAxis: [0.6, 0.5, 0.6]
-    #   rotationDeg: 41.0
-    #   scale: [1.0, 1.0, 1.0]
-    #   shader: dirtblock
-    #   mesh: cube
-    #   texture: dirtblock
-    #   color: [1.0, 1.0, 1.0]
-    #   isStatic: false
+    - name: Block
+      position: [-2.3, 11.6, 8.7]
+      rotationAxis: [0.6, 0.5, 0.6]
+      rotationDeg: 41.0
+      scale: [1.0, 1.0, 1.0]
+      shader: default
+      mesh: cube
+      texture: ""
+      color: [0.929, 0.443, 0.392]
+      isStatic: false
 
-    # - name: Block
-    #   position: [1.5, 17.4, -9.0]
-    #   rotationAxis: [0.7, 0.3, 0.6]
-    #   rotationDeg: 95.0
-    #   scale: [1.0, 1.0, 1.0]
-    #   shader: dirtblock
-    #   mesh: cube
-    #   texture: dirtblock
-    #   color: [1.0, 1.0, 1.0]
-    #   isStatic: false
+    - name: Block
+      position: [1.5, 17.4, -9.0]
+      rotationAxis: [0.7, 0.3, 0.6]
+      rotationDeg: 95.0
+      scale: [1.0, 1.0, 1.0]
+      shader: default
+      mesh: cube
+      texture: ""
+      color: [0.369, 0.471, 0.290]
+      isStatic: false

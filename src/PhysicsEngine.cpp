@@ -157,7 +157,6 @@ void PhysicsEngine::processInput()
     Scene* scene = m_sceneManager->getCurrentScene();
     if (!scene) return;
 
-    // Skip mouse interaction if ImGui is using the mouse
     ImGuiIO& io = ImGui::GetIO();
     if (io.WantCaptureMouse) return;
 

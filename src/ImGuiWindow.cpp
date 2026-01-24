@@ -175,13 +175,14 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     bool& enableVolumeConstraints = scene.enableVolumeConstraints();
     ImGui::Checkbox("Enable Volume Constraints", &enableVolumeConstraints);
 
-    bool& enableEnvCollisionConstraints = scene.enableEnvCollisionConstraints();
-    ImGui::Checkbox("Enable Collision Constraints", &enableEnvCollisionConstraints);
+    // bool& enableEnvCollisionConstraints = scene.enableEnvCollisionConstraints();
+    // ImGui::Checkbox("Enable Collision Constraints", &enableEnvCollisionConstraints);
 
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
     float& alpha = scene.getAlpha();
-    float alpha_min = 0.1f;
+    float alpha_min = 0.0f;
+    if (scene.getName() == "Test Scene 2") alpha_min = 0.1f;
     float alpha_max = 1.0f;
     ImGui::Text("Compliance:");
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
@@ -198,16 +199,16 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     ImGui::PopItemWidth();
     ImGui::Separator();
 
-    float& k = scene.getOverpressureFactor();
-    float k_max = 10.0f;
-    ImGui::SameLine();
-    if (ImGui::Button("Reset")) {
-        k = 1.0f;
-    }
-    ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    ImGui::SliderFloat("##k", &k, 0.0f, k_max);
-    ImGui::PopItemWidth();
-    ImGui::Separator();
+    // float& k = scene.getOverpressureFactor();
+    // float k_max = 10.0f;
+    // ImGui::SameLine();
+    // if (ImGui::Button("Reset")) {
+    //     k = 1.0f;
+    // }
+    // ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
+    // ImGui::SliderFloat("##k", &k, 0.0f, k_max);
+    // ImGui::PopItemWidth();
+    // ImGui::Separator();
 }
 
 void DebugWindow::displaySceneReset(Scene& scene)

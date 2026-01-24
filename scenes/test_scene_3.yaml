@@ -20,28 +20,18 @@ scene:
       scale: [1000.0, 1.0, 1000.0]
       shader: ground
       mesh: surface
-      texture: tile
+      texture: checkerboard
       color: [1.0, 1.0, 1.0]
       isStatic: true
 
-    - name: Cone
-      position: [0.0, 10.0, 0.0]
-      rotationAxis: [0.0, 0.0, 1.0]
-      rotationDeg: 0.0
-      scale: [10.0, 10.0, 10.0]
-      shader: sphere
-      mesh: cone
-      texture: ""
-      color: [1.0, 0.0, 1.0]
-      isStatic: true
-
-    - name: Torus
-      position: [0.0, 30.0, 0.0]
-      rotationAxis: [0.0, 0.0, 1.0]
-      rotationDeg: 0.0
-      scale: [10.0, 10.0, 10.0]
-      shader: sphere
-      mesh: torus
-      texture: ""
-      color: [0.0, 1.0, 0.0]
-      isStatic: false
+    # # Towel
+    # - name: Towel
+    #   position: [0.0, 10.0, 0.0]
+    #   rotationAxis: [0.0, 0.0, 1.0]
+    #   rotationDeg: 180.0
+    #   scale: [1.0, 1.0, 1.0]
+    #   shader: dirtblock
+    #   mesh: towel
+    #   texture: ""
+    #   color: [1.0, 0.0, 0.0]
+    #   isStatic: false

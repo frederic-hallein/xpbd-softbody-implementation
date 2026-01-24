@@ -216,11 +216,11 @@ Scene::Scene(
         m_shaderManager(shaderManager),
         m_meshManager(meshManager),
         m_textureManager(textureManager),
-        m_gravitationalAcceleration(0.0f, 0.0f, 0.0f),
+        m_gravitationalAcceleration(0.0f, -9.81f, 0.0f),
         m_groundLevel(0.0f),
-        m_enableDistanceConstraints(false),
-        m_enableVolumeConstraints(false),
-        m_enableEnvCollisionConstraints(false),
+        m_enableDistanceConstraints(true),
+        m_enableVolumeConstraints(true),
+        m_enableEnvCollisionConstraints(true),
         m_xpbdSubsteps(1),
         m_alpha(0.001f),
         m_beta(1.0f),
@@ -553,58 +553,56 @@ void Scene::solveEnvCollisionConstraints(
     std::vector<Mesh::EnvCollisionConstraints> perEnvCollisionConstraints
 )
 {
-    // for (size_t setIdx = 0; setIdx < perEnvCollisionConstraints.size(); ++setIdx)
-    // {
-    //     const auto& constraints = perEnvCollisionConstraints[setIdx];
-    //     size_t verticesSize = constraints.vertices.size();
-    //     size_t CSize = constraints.C.size();
-    //     size_t gradCSize = constraints.gradC.size();
+    for (size_t setIdx = 0; setIdx < perEnvCollisionConstraints.size(); ++setIdx)
+    {
+        const auto& constraints = perEnvCollisionConstraints[setIdx];
+        size_t verticesSize = constraints.vertices.size();
+        size_t CSize = constraints.C.size();
+        size_t gradCSize = constraints.gradC.size();
 
-    //     if (verticesSize != gradCSize)
-    //     {
-    //         logger::error("EnvCollisionConstraints size mismatch in set {}", setIdx);
-    //         continue;
-    //     }
+        if (verticesSize != gradCSize)
+        {
+            logger::error("EnvCollisionConstraints size mismatch in set {}", setIdx);
+            continue;
+        }
 
-    //     for (const auto& [vertex, constraintIndices] : constraints.vertexToConstraints)
-    //     {
-    //         bool allNegative = true;
-    //         float maxNegativeC = -std::numeric_limits<float>::max(); // Initialize to most negative possible value
-    //         size_t maxIdx = 0;
-    //         for (size_t idx : constraintIndices)
-    //         {
-    //             float C_j = constraints.C[idx](x);
-    //             if (C_j >= 0.0f)
-    //             {
-    //                 allNegative = false;
-    //             }
+        for (const auto& [vertex, constraintIndices] : constraints.vertexToConstraints)
+        {
+            bool allNegative = true;
+            float maxNegativeC = -std::numeric_limits<float>::max();
+            size_t maxIdx = 0;
+            for (size_t idx : constraintIndices)
+            {
+                float C_j = constraints.C[idx](x);
+                if (C_j >= 0.0f)
+                {
+                    allNegative = false;
+                }
 
-    //             // Track the constraint with biggest negative value
-    //             if (C_j < 0.0f && C_j > maxNegativeC)
-    //             {
-    //                 maxNegativeC = C_j;
-    //                 maxIdx = idx;
-    //             }
-    //         }
+                // Track the constraint with biggest negative value
+                if (C_j < 0.0f && C_j > maxNegativeC)
+                {
+                    maxNegativeC = C_j;
+                    maxIdx = idx;
+                }
+            }
 
-    //         // If all constraints are negative, we have a collision with this vertex
-    //         if (allNegative && !constraintIndices.empty())
-    //         {
-    //             float C_j = maxNegativeC;
-    //             std::vector<glm::vec3> gradC_j = constraints.gradC[maxIdx](x);
+            // If all constraints are negative, we have a collision with this vertex
+            if (allNegative && !constraintIndices.empty())
+            {
+                float C_j = maxNegativeC;
+                std::vector<glm::vec3> gradC_j = constraints.gradC[maxIdx](x);
 
-    //             std::array<unsigned int, 1> constraintVertices = { vertex };
+                std::array<unsigned int, 1> constraintVertices = { vertex };
 
-    //             float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
-    //             std::vector<glm::vec3> deltaX = calculateDeltaX(deltaLambda, M, gradC_j, constraintVertices);
+                float deltaLambda = calculateDeltaLambda(C_j, gradC_j, posDiff, constraintVertices, M, alphaTilde, gamma);
 
-    //             for (size_t k = 0; k < deltaX.size(); ++k)
-    //             {
-    //                 x[k] += deltaX[k];
-    //             }
-    //         }
-    //     }
-    // }
+                std::vector<glm::vec3> deltaX(M.size(), glm::vec3(0.0f));
+                setDeltaX(deltaX, deltaLambda, M, gradC_j, constraintVertices);
+                updateConstraintPositions(x, deltaX);
+            }
+        }
+    }
 }
 
 void Scene::applyXPBD(
@@ -662,14 +660,14 @@ void Scene::applyXPBD(
         // TODO : fixme
         // Environment Collision constraints
         if (m_enableEnvCollisionConstraints) {
-            // solveEnvCollisionConstraints(
-            //     x,
-            //     posDiff,
-            //     M,
-            //     alphaTilde,
-            //     gamma,
-            //     perEnvCollisionConstraints
-            // );
+            solveEnvCollisionConstraints(
+                x,
+                posDiff,
+                M,
+                alphaTilde,
+                gamma,
+                perEnvCollisionConstraints
+            );
         }
 
         // Distance constraints
