@@ -6,18 +6,20 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
 
-class Camera
-{
+class Camera {
+public:
+    struct SphericalCoordinates {
+        float radius;
+        float theta;
+        float phi;
+    };
+
 public:
     Camera(
         glm::vec3 cameraPos,
-        float FOV,
         float aspectRatio,
-        float nearPlane,
-        float farPlane,
         GLFWwindow* window
     );
-
     const glm::vec3& getPosition() const { return m_cameraPos; }
     const glm::vec3& getFront()    const { return m_cameraFront; }
     const glm::vec3& getRight()    const { return m_cameraRight; }
@@ -27,13 +29,21 @@ public:
     float getNearPlane()           const { return m_nearPlane; }
     float getFarPlane()            const { return m_farPlane; }
 
+    SphericalCoordinates getSphericalPosition() {
+        setOrbit();
+        return {m_sphericalRadius, m_sphericalTheta, m_sphericalPhi};
+    }
+
     bool isDragging()              const { return m_isDragging; }
 
     glm::mat4 getProjectionMatrix() const;
     glm::mat4 getViewMatrix() const;
     glm::vec3 getRayDirection(double mouseX, double mouseY, unsigned int screenWidth, unsigned int screenHeight) const;
 
-    void setPosition(const glm::vec3& position) { m_cameraPos = position; }
+    void setPosition(const glm::vec3& position) {
+        m_cameraPos = position;
+        setOrbit();
+    }
     void setDeltaTime(float deltaTime) { m_deltaTime = deltaTime; }
     void setDragging(bool dragging) { m_isDragging = dragging; }
     void setLastMousePos(double x, double y) { m_lastX = x; m_lastY = y; }
@@ -69,6 +79,10 @@ private:
 
     bool m_isDragging;
     double m_lastX, m_lastY;
+
+    float m_sphericalRadius;  // distance from origin
+    float m_sphericalTheta;   // azimuthal angle (around Y-axis)
+    float m_sphericalPhi;     // polar angle (from Y-axis)
 
     float m_orbitYaw;
     float m_orbitPitch;

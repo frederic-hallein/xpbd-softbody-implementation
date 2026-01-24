@@ -6,8 +6,7 @@
 #include "Scene.hpp"
 #include "SceneManager.hpp"
 
-class ImGuiWindow
-{
+class ImGuiWindow {
 public:
     ImGuiWindow(
         GLFWwindow* window,
@@ -20,8 +19,7 @@ public:
     void close();
 };
 
-class DebugWindow : public ImGuiWindow
-{
+class DebugWindow : public ImGuiWindow {
 public:
     DebugWindow(
         GLFWwindow* window,
@@ -35,6 +33,9 @@ public:
     );
 
 private:
+    std::deque<float> m_fpsHistory;
+
+private:
     void displaySceneSelector(SceneManager& sceneManager);
     void displayPerformance(int frameDuration);
     void displayCamera(Camera* camera);
@@ -43,9 +44,7 @@ private:
     void displaySceneReset(Scene& scene);
     void displayPolygonMode(size_t objectIndex, Object* object);
     void displayObjectPanel(size_t objectIndex, Object* object);
+    void displayNormalShaders(size_t objectIndex, Object* object);
     void displayVertexTransforms(size_t objectIndex, Object* object);
     void displaySceneObjects(Scene& scene);
-
-private:
-    std::deque<float> m_fpsHistory;
 };

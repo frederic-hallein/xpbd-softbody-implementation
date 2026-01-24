@@ -50,6 +50,13 @@ public:
     void resetVertexTransforms();
 
     void setProjectionViewUniforms(const Shader& shader);
+
+    bool getEnableVertexNormalShader() const { return m_enablevertexNormalShader; }
+    void setEnableVertexNormalShader(bool enable) { m_enablevertexNormalShader = enable; }
+
+    bool getEnableFaceNormalShader() const { return m_enableFaceNormalShader; }
+    void setEnableFaceNormalShader(bool enable) { m_enableFaceNormalShader = enable; }
+
     static void setVertexNormalShader(const Shader& shader) { s_vertexNormalShader = shader; }
     static void setFaceNormalShader(const Shader& shader)   { s_faceNormalShader   = shader; }
 

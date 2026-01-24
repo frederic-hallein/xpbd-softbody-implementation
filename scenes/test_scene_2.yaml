@@ -9,8 +9,8 @@ scene:
       scale: [1000.0, 1.0, 1000.0]
       shader: ground
       mesh: surface
-      texture: checkerboard
-      color: [1.0, 1.0, 1.0]
+      texture: ""
+      color: [0.816, 0.780, 0.737]
       isStatic: true
 
     # Sphere

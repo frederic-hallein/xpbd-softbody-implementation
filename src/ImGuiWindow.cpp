@@ -3,10 +3,14 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include "SceneManager.hpp"
+#include "glm/fwd.hpp"
 #include "logger.hpp"
 #include "ImGuiWindow.hpp"
 
-ImGuiWindow::ImGuiWindow(GLFWwindow* window, const char* glslVersion)
+ImGuiWindow::ImGuiWindow(
+    GLFWwindow* window,
+    const char* glslVersion
+)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -20,21 +24,18 @@ ImGuiWindow::ImGuiWindow(GLFWwindow* window, const char* glslVersion)
     logger::info("ImGuiWindow created successfully");
 }
 
-void ImGuiWindow::newFrame()
-{
+void ImGuiWindow::newFrame() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void ImGuiWindow::render()
-{
+void ImGuiWindow::render() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void ImGuiWindow::close()
-{
+void ImGuiWindow::close() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -50,7 +51,9 @@ DebugWindow::DebugWindow(
 {
 }
 
-void DebugWindow::displaySceneSelector(SceneManager& sceneManager)
+void DebugWindow::displaySceneSelector(
+    SceneManager& sceneManager
+)
 {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Scene Selection");
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
@@ -59,27 +62,28 @@ void DebugWindow::displaySceneSelector(SceneManager& sceneManager)
     const std::string& currentScene = sceneManager.getCurrentSceneName();
 
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
-    if (ImGui::BeginCombo("##SceneCombo", currentScene.c_str()))
-    {
-        for (const auto& [sceneName, scene] : scenes)
-        {
+    if (ImGui::BeginCombo("##SceneCombo", currentScene.c_str())) {
+        for (const auto& [sceneName, scene] : scenes) {
             bool isSelected = (currentScene == sceneName);
-            if (ImGui::Selectable(sceneName.c_str(), isSelected))
-            {
+            if (ImGui::Selectable(sceneName.c_str(), isSelected)) {
                 sceneManager.switchScene(sceneName);
             }
-            if (isSelected)
-            {
+
+            if (isSelected) {
                 ImGui::SetItemDefaultFocus();
             }
         }
+
         ImGui::EndCombo();
     }
+
     ImGui::PopItemWidth();
     ImGui::Separator();
 }
 
-void DebugWindow::displayPerformance(int frameDuration)
+void DebugWindow::displayPerformance(
+    int frameDuration
+)
 {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Performance");
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
@@ -89,7 +93,7 @@ void DebugWindow::displayPerformance(int frameDuration)
     ImGui::Text("FPS: %.1f", fps);
 
     m_fpsHistory.push_back(fps);
-    if (m_fpsHistory.size() > 120) {
+    if (m_fpsHistory.size() > 120.0f) {
         m_fpsHistory.pop_front();
     }
 
@@ -123,34 +127,52 @@ void DebugWindow::displayPerformance(int frameDuration)
     ImGui::Separator();
 }
 
-void DebugWindow::displayCamera(Camera* camera)
+void DebugWindow::displayCamera(
+    Camera* camera
+)
 {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Camera");
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
-    const glm::vec3& cameraPosition = camera->getPosition();
-    ImGui::Text("Pos: x = %.2f, y = %.2f, z = %.2f", cameraPosition.x, cameraPosition.y, cameraPosition.z);
-
-    ImGui::Text("Reset Camera [C]");
-    ImGui::SameLine();
-    if (ImGui::Button("Reset##ResetCamera") || ImGui::IsKeyPressed(ImGuiKey_C))
+    if (ImGui::Button("Reset Camera (or press C)##ResetCamera") || ImGui::IsKeyPressed(ImGuiKey_C)) {
         camera->resetPosition();
+    }
+
+    ImGui::Dummy(ImVec2(0.0f, 5.0f));
+    ImGui::Text("Position:");
+
+    const glm::vec3& cameraPosition = camera->getPosition();
+    ImGui::Text("x = %.2f, y = %.2f, z = %.2f", cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+    auto spherical = camera->getSphericalPosition();
+    ImGui::Text("r = %.2f, theta = %.2f, phi = %.2f",
+        spherical.radius,
+        glm::degrees(spherical.theta),
+        glm::degrees(spherical.phi)
+    );
 
     ImGui::Separator();
 }
 
-void DebugWindow::displayExternalForces(Scene& scene)
+void DebugWindow::displayExternalForces(
+    Scene& scene
+)
 {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "External Forces");
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
     glm::vec3& gravitationalAcceleration = scene.getGravitationalAcceleration();
     ImGui::Text("Gravity:");
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    ImGui::SliderFloat("##Gravity", &gravitationalAcceleration.y, -9.81f, 9.81f);
+    if (ImGui::Button("Reset")) {
+        gravitationalAcceleration = glm::vec3(0.0f, -9.81f, 0.0f);
+    }
+    ImGui::SliderFloat("##Gravity", &gravitationalAcceleration.y, -50.0f, 50.0f);
     ImGui::PopItemWidth();
     ImGui::Separator();
 }
 
-void DebugWindow::displayXPBDParameters(Scene& scene)
+void DebugWindow::displayXPBDParameters(
+    Scene& scene
+)
 {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "XPBD");
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
@@ -211,31 +233,34 @@ void DebugWindow::displayXPBDParameters(Scene& scene)
     // ImGui::Separator();
 }
 
-void DebugWindow::displaySceneReset(Scene& scene)
+void DebugWindow::displaySceneReset(
+    Scene& scene
+)
 {
     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Scene Objects:");
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
-    ImGui::Text("Reset Scene [R]");
-    ImGui::SameLine();
-    if (ImGui::Button("Reset##ResetScene") || ImGui::IsKeyPressed(ImGuiKey_R))
-    {
-        for (auto& obj : scene.getObjects())
+    if (ImGui::Button("Reset Scene (or press R)##ResetScene") || ImGui::IsKeyPressed(ImGuiKey_R)) {
+        for (auto& obj : scene.getObjects()) {
             obj->resetVertexTransforms();
+        }
     }
 
     ImGui::Dummy(ImVec2(0.0f, 5.0f));
 }
 
-void DebugWindow::displayVertexTransforms(size_t objectIndex, Object* object)
+void DebugWindow::displayVertexTransforms(
+    size_t objectIndex,
+    Object* object
+)
 {
-    if (!ImGui::TreeNode(("Vertex Transforms##" + std::to_string(objectIndex)).c_str()))
+    if (!ImGui::TreeNode(("Vertex Transforms##" + std::to_string(objectIndex)).c_str())) {
         return;
+    }
 
     const auto& vertexTransforms = object->getVertexTransforms();
     ImGui::Separator();
-    for (size_t j = 0; j < vertexTransforms.size(); ++j)
-    {
+    for (size_t j = 0; j < vertexTransforms.size(); ++j) {
         const glm::vec3& position = vertexTransforms[j].getPosition();
         const glm::vec3& velocity = vertexTransforms[j].getVelocity();
         const glm::vec3& acceleration = vertexTransforms[j].getAcceleration();
@@ -250,7 +275,10 @@ void DebugWindow::displayVertexTransforms(size_t objectIndex, Object* object)
     ImGui::TreePop();
 }
 
-void DebugWindow::displayPolygonMode(size_t objectIndex, Object* object)
+void DebugWindow::displayPolygonMode(
+    size_t objectIndex,
+    Object* object
+)
 {
     if (!ImGui::TreeNode(("Polygon Mode##" + std::to_string(objectIndex)).c_str()))
         return;
@@ -265,34 +293,62 @@ void DebugWindow::displayPolygonMode(size_t objectIndex, Object* object)
     ImGui::TreePop();
 }
 
-void DebugWindow::displayObjectPanel(size_t objectIndex, Object* object)
+void DebugWindow::displayNormalShaders(
+    size_t objectIndex,
+    Object* object
+)
+{
+    if (!ImGui::TreeNode(("Normal Shaders##" + std::to_string(objectIndex)).c_str())) {
+        return;
+    }
+
+    bool enableVertexNormals = object->getEnableVertexNormalShader();
+    if (ImGui::Checkbox(("Vertex Normals##" + std::to_string(objectIndex)).c_str(), &enableVertexNormals)) {
+        object->setEnableVertexNormalShader(enableVertexNormals);
+    }
+
+    bool enableFaceNormals = object->getEnableFaceNormalShader();
+    if (ImGui::Checkbox(("Face Normals##" + std::to_string(objectIndex)).c_str(), &enableFaceNormals)) {
+        object->setEnableFaceNormalShader(enableFaceNormals);
+    }
+
+    ImGui::TreePop();
+}
+
+void DebugWindow::displayObjectPanel(
+    size_t objectIndex,
+    Object* object
+)
 {
     std::string title = object->getName() + " " + std::to_string(objectIndex);
-
-    if (!ImGui::CollapsingHeader(title.c_str()))
+    if (!ImGui::CollapsingHeader(title.c_str())) {
         return;
+    }
 
     displayVertexTransforms(objectIndex, object);
     displayPolygonMode(objectIndex, object);
 }
 
-void DebugWindow::displaySceneObjects(Scene& scene)
+void DebugWindow::displaySceneObjects(
+    Scene& scene
+)
 {
     const auto& objects = scene.getObjects();
     std::unordered_map<std::string, int> objectCounts;
 
-    for (size_t i = 0; i < objects.size(); ++i)
-    {
+    for (size_t i = 0; i < objects.size(); ++i) {
         Object* object = objects[i].get();
         int count = ++objectCounts[object->getName()];
 
         std::string title = object->getName() + " " + std::to_string(count);
 
-        if (!ImGui::CollapsingHeader(title.c_str()))
+        if (!ImGui::CollapsingHeader(title.c_str())) {
             continue;
+        }
 
         displayVertexTransforms(i, object);
         displayPolygonMode(i, object);
+        displayNormalShaders(i, object);
     }
 }
 
@@ -302,7 +358,10 @@ void DebugWindow::update(
     SceneManager& sceneManager
 )
 {
-    ImGui::SetNextWindowSizeConstraints(ImVec2(300, 0), ImVec2(FLT_MAX, FLT_MAX));
+    ImGui::SetNextWindowSizeConstraints(
+        ImVec2(300, 0),
+        ImVec2(FLT_MAX, FLT_MAX)
+    );
     ImGui::Begin("Debug");
 
     displaySceneSelector(sceneManager);

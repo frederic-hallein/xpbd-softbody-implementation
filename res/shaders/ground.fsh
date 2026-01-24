@@ -10,13 +10,12 @@ uniform vec3 objectColor;
 uniform vec3 lightPos;
 uniform vec3 lightColor;
 uniform vec3 viewPos;
-uniform sampler2D ourTexture;
-uniform bool hasTexture;
+uniform bool hasTexture; // Not used for checkerboard, but kept for compatibility
 
 void main()
 {
-    float ambientStrength = 0.01f;
-    float specularStrength = 0.01f;
+    float ambientStrength = 0.1f;
+    float specularStrength = 0.1f;
 
     // Lighting calculations
     vec3 ambient = ambientStrength * lightColor;
