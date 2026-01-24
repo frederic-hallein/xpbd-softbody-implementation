@@ -346,6 +346,16 @@ void DebugWindow::displaySceneObjects(
             continue;
         }
 
+        Mesh& mesh = object->getMesh();
+        size_t vertexCount = mesh.getPositions().size();
+        size_t edgeCount = mesh.distanceConstraints.edges.size();
+        size_t triangleCount = mesh.volumeConstraints.triangles.size();
+
+        ImGui::Text("Vertices: %zu", vertexCount);
+        ImGui::Text("Edges: %zu", edgeCount);
+        ImGui::Text("Triangles: %zu", triangleCount);
+        ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
         float distanceEnergy = object->getDistanceConstraintEnergy();
         ImGui::Text("Distance Constraint Energy: %.2f J", distanceEnergy);
 

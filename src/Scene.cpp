@@ -830,7 +830,7 @@ void Scene::render() {
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    glClearColor(0.53f, 0.81f, 0.92f, 1.0f); // TODO : use skybox instead
+    glClearColor(0.820, 0.976, 0.973, 1.0f); // TODO : use skybox instead
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     for (const auto& object : m_objects) {
