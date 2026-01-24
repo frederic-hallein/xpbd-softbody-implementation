@@ -9,7 +9,6 @@
 Shader Object::s_vertexNormalShader;
 Shader Object::s_faceNormalShader;
 
-// TODO : refactor
 std::unique_ptr<Camera> Scene::createCamera() {
     float aspectRatio = static_cast<float>(m_screenWidth) / static_cast<float>(m_screenHeight);
     return std::make_unique<Camera>(
@@ -19,7 +18,6 @@ std::unique_ptr<Camera> Scene::createCamera() {
     );
 }
 
-// TODO : refactor
 std::unique_ptr<Light> Scene::createLight() {
     return std::make_unique<Light>(glm::vec3(0.0f, 20.0f, 0.0f));
 }
