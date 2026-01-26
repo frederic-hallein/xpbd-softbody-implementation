@@ -23,7 +23,19 @@ The project uses OpenGL for rendering and ImGui for real-time debugging and para
 
 ## Preview
 
-TODO: add gif (in description: add specs/parameters used for running sim)
+
+<p align="center">
+  <img src="assets/sphere.gif" alt="XPBD Softbody Simulation - Bouncy Sphere" width="800"/>
+</p>
+<p align="center"><b>Gif 1:</b> Bouncy sphere with distance and volume constraints.   </p>
+
+
+<p align="center">
+  <img src="assets/cloth.gif" alt="XPBD Softbody Simulation - Bouncy Sphere" width="800"/>
+</p>
+<p align="center"><b>Gif 1:</b> Cloth in zero-gravity with only distance constraints.</p>
+
+
 
 ## Technical Overview
 
