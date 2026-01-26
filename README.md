@@ -1,98 +1,193 @@
-# XPBD Softbody Implementation
-
-## Description [TODO: update]
-
-**XPBD Softbody Implementation** is a physics algorithm implementation written in C++ using OpenGL for rendering. The project focuses on simulating softbody dynamics using **Extended Position Based Dynamics (XPBD)** ([Macklin et al., 2019](https://matthias-research.github.io/pages/publications/smallsteps.pdf)), enabling realistic and efficient softbody physics.
+# XPBD Softbody Simulator
 
 
-[TODO: add source https://learnopengl.com/]
+**XPBD Softbody Simulator** is a real-time 3D physics simulation engine written in C++ for experimenting with and visualizing deformable object dynamics. It implements *Extended Position Based Dynamics (XPBD)*, a constraint-based formulation that enables stable and efficient softbody simulation with physically plausible material deformation. The engine features an interactive interface for live parameter tuning, scene switching, and detailed object state logging, making it well-suited for learning, prototyping, and research-oriented exploration of real-time physics.
 
-## Visuals
+The project uses OpenGL for rendering and ImGui for real-time debugging and parameter modification. Meshes are loaded from `.obj` files using ASSIMP, and scenes are defined through YAML configuration files to separate data from code and support flexible scene composition. Development was informed by the XPBD paper by [Macklin et al., (2019)](https://matthias-research.github.io/pages/publications/smallsteps.pdf), as well as OpenGL learning resources such as [LearnOpenGL](https://learnopengl.com/
+), which guided the rendering architecture and graphics pipeline design.
 
-![Physics Engine Screenshot](screenshots/readme-screenshot.png)
+## Table of Content
 
----
+- [Preview](#preview)
+- [Technical Overview](#technical-overview)
+  - [Constraint Formulation](#constraint-formulation)
+  - [Constraint Types](#constraint-types)
+  - [Simulation Loop](#simulation-loop)
+- [Key Features](#key-features)
+- [Build](#build)
+- [Usage](#usage)
+  - [Camera Controls](#camera-controls)
+  - [Object Interaction](#object-interaction)
+  - [Simulation Controls (ImGui Debug Window)](#simulation-controls-imgui-debug-window)
+- [Future Work](#future-work)
 
-## Installation
+## Preview
 
-### Dependencies
+TODO: add gif (in description: add specs/parameters used for running sim)
 
-- **C++20** compiler (GCC 10+/Clang 10+)
-- **CMake** 3.28.3 or newer
+## Technical Overview
+
+This project implements **Extended Position Based Dynamics (XPBD)**, a constraint-based framework for robust and efficient real-time simulation of deformable objects. Unlike force-based methods, XPBD defines object behavior through *geometric constraints* that enforce desired relationships between particles.
+
+### Constraint Formulation
+
+In XPBD, constraints are mathematical functions that describe relationships between particle positions:
+
+$$C(\mathbf{x}_0, \mathbf{x}_1, ..., \mathbf{x}_n)$$
+
+where $\mathbf{x}_i \in \mathbb{R}^3$ represents particle positions. A constraint is satisfied when above expression equals zero. The framework iteratively corrects particle positions and updates Lagrange multipliers $\lambda$ to enforce constraints, enabling physically plausible deformation while maintaining stability under large time steps.
+
+### Constraint Types
+
+This simulator supports two primary constraint types:
+
+- **Distance Constraints** for maintaining fixed edge lengths between particles which is defined as:
+
+$$C_j(\mathbf{x}_k, \mathbf{x}_l) = |\mathbf{x}_l - \mathbf{x}_k| - d_0,$$
+
+where $d_0$ is the rest distance.
+
+
+- A **Volume Constraint** for preserving the objects volume which is defined as:
+
+$$C(\mathbf{x}_0, ..., \mathbf{x}_n) = \left( \sum^{n_\text{triangles} - 1}_{i = 1} \frac{1}{6} (\mathbf{x}_{t_{i,0}} \times \mathbf{x}_{t_{i,1}}) \cdot \mathbf{x}_{t_{i,2}} \right) - pV_0,$$
+
+where $t_{i,0}, t_{i,1},$ and $t_{i,0}$ are the three indices of the vertices belonging to triangle $i$, $p$ is the overpressure factor, and $V_0$ is the rest volume.
+
+### Simulation Loop
+
+1. **Time Step Subdivision:**
+
+To enable stable simulation under large time steps, the frame time $\Delta t$ is subdivided into $n_\text{steps}$ smaller substeps
+
+$$\Delta t_s = \frac{\Delta t}{n_\text{steps}},$$
+
+which accelerates constraint convergence and eliminates the need to explicitly track Lagrange multipliers $\lambda_j$ across time steps.
+
+2. **Position Prediction:**
+
+At each substep, particle positions are predicted by integrating external forces (e.g., gravity):
+
+$$\tilde{\mathbf{x}} = \mathbf{x}^n + \Delta t_s \mathbf{v}^n + \Delta t_s^2 \mathbf{M}^{-1} \mathbf{f}_\text{ext}$$
+
+3. **Constraint Solving:**
+
+For each substep, all constraints are iteratively enforced by computing the position and Lagrange multiplier corrections:
+$$\Delta \mathbf{x} = \mathbf{M}^{-1} \nabla C_j (\mathbf{x})^T \Delta \lambda_j$$
+
+$$\Delta \mathbf{\lambda}_j = \frac{-C_j(\mathbf{x}) - \gamma_j \nabla C_j (\mathbf{x} - \mathbf{x}^n)}{(1 + \gamma_j) \nabla C_j \mathbf{M}^{-1} \nabla C_j^T + \tilde{\alpha}_j}$$
+
+where
+
+- $\mathbf{M}$ is the mass matrix
+- $\tilde{\alpha}_j$ is the inverse stiffness or *compliance*
+- $\gamma_j = \frac{\tilde{\alpha}_j \tilde{\beta}_j}{\Delta t_s}$ is the time step scaled
+product of compliance and damping parameter $\tilde{\beta}_j$.
+
+Positions are then updated: $\mathbf{x}^{n+1} \leftarrow \tilde{\mathbf{x}} + \Delta \mathbf{x}$
+
+4. **Velocity Update:**
+
+After all constraints are satisfied, velocities are updated for the next substep:
+
+$$\mathbf{v}^{n+1} = \frac{\mathbf{x}^{n+1} - \mathbf{x}^n}{\Delta t_s}$$
+
+This process repeats for each substep until the full frame time $\Delta t$ is consumed.
+
+
+## Key Features
+
+- **Orbital Camera Controls:** Intuitive camera navigation with right-click orbit, scroll zoom, and camera reset functionality.
+- **Real-Time Parameter Control:** Adjust simulation parameters (gravity, compliance, damping, solver substeps) live through the ImGui debug window.
+- **Object Grabbing:** Interactive object manipulation using the *Möller–Trumbore ray-triangle intersection* algorithm for precise picking.
+- **Collision & Containment:** Basic ground collision detection with invisible barriers to prevent objects from escaping the simulation space.
+- **Scene Management:** Switch between predefined scenes loaded from YAML configuration files for flexible experimentation.
+- **Lighting & Shading:** Phong lighting model with support for normal visualization and polygon mode toggling (wireframe/filled).
+- **Constraint-Based Dynamics:** Supported constraint types include distance constraints (which maintain edge lengths) and volume constraints (which preserve object volume), enabling physically plausible softbody deformation.
+- **Performance Monitoring:** Real-time FPS counter and frame duration visualization for optimization feedback.
+
+## Build
+
+The program requires the following dependencies:
+
+- **C++20** compatible compiler (GCC ≥ 10 or Clang ≥ 10)
+- **CMake** ≥ 3.28.3
 - **OpenGL** development libraries
-- **GLFW3** development libraries
-- **Assimp** development libraries
-- **yaml-cpp** development libraries
-- **ImGui** (included in the repository)
+- **GLFW** development libraries
+- **GLM**
+- **ASSIMP**
+- **yaml-cpp**
 
-### Ubuntu/Debian
+These can be installed as follows:
 
 ```sh
-sudo apt-get update
-sudo apt-get install build-essential cmake libassimp-dev libglm-dev libglfw3-dev libglew-dev libyaml-cpp-dev
+sudo apt update
+sudo apt install build-essential cmake libglfw3-dev libglew-dev libglm-dev libassimp-dev libyaml-cpp-dev
 ```
 
-1. **Clone the repository:**
+For building the project, do the following:
+
+1. Clone the repository:
     ```sh
-    git clone https://github.com/frederic-hallein/xpbd-softbody-implementation.git
+    git clone git@github.com:frederic-hallein/xpbd-softbody-simulator.git
+    cd xpbd-softbody-simulator
     ```
 
-2. **Enter the project directory:**
+2. Create a build directory:
     ```sh
-    cd xpbd-softbody-implementation
+    mkdir build && cd build
     ```
 
-3. **Create and enter the build directory:**
-    ```sh
-    mkdir build
-    cd build
-    ```
-
-4. **Configure the project with CMake:**
+3. Configure the project:
     ```sh
     cmake -DCMAKE_BUILD_TYPE=Release ..
     ```
 
-5. **Build the project:**
+4. Build:
     ```sh
-    make
+    cmake --build .
     ```
-
-6. **Run the executable:**
-    ```sh
-    ./xpbd-softbody
-    ```
-
----
 
 ## Usage
 
-### Controls
+After building, launch the executable:
 
-- **Left Mouse Button + Drag:** Orbit the camera around the origin.
-- **Mouse Scroll Wheel:** Zoom in/out.
+```sh
+./xpbd-softbody-simulator
+```
 
-#### ImGui Debug Window
+### Camera Controls
 
-- **Reset Camera Button:** Resets camera (shortcut: C).
-- **Reset Scene Button:** Resets all objects (shortcut: R).
-- **Sliders:** Adjust gravity, alpha, beta, and solver substeps.
-- **Toggles:** Enable/disable distance, volume, and collision constraints.
+- **Right Mouse Button + Drag:** Orbit the camera around the origin.
+- **Mouse Scroll Wheel:** Move camera radially from the origin.
+- **`ESC`-Key:** quit the program.
 
----
+### Object Interaction
 
-## Roadmap
+- **Left Mouse Button + Drag:** Grab and move objects in the scene.
 
-- Improved collision detection and response
-- Support for more constraint types (e.g. friction constraint)
-- Enhanced rendering (e.g. shadows, materials)
-- More object primitives and mesh import formats
-- Performance optimizations and parallelization
+### Simulation Controls (ImGui Debug Window)
 
----
+- **Scene Selection:** Switch between available scenes using a dropdown menu.
+- **Performance Monitor:** View real-time frame duration and FPS, with a live FPS plot.
+- **Camera Controls:** Reset camera position (button or press `C`) and view camera coordinates.
+- **External Forces:** Adjust gravity using a slider or reset to default.
+- **XPBD Parameters:**
+  - Change solver substeps (slider or +/- buttons).
+  - Toggle distance and volume constraints.
+  - Adjust compliance and damping parameters.
+- **Scene Reset:** Reset all objects in the scene (button or press `R`).
+- **Object Panels:**
+  - View mesh topology and constraint energies.
+  - Inspect vertex positions, velocities, and accelerations.
+  - Switch between wireframe and filled polygon modes.
+  - Toggle vertex and face normal shaders.
 
-## Project Status
 
-**Not currently in active development.**
-Core XPBD simulation and rendering features are implemented.
-Additional features and optimizations are planned but not actively worked on.
+
+
+## Future Work
+
+- Implement bending constraints for more realistic softbody deformation
+- Add proper collision detection and response between softbodies
+- Introduce static and kinetic friction for more accurate physical interactions

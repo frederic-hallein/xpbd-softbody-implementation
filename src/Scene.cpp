@@ -218,7 +218,7 @@ Scene::Scene(
         m_shaderManager(shaderManager),
         m_meshManager(meshManager),
         m_textureManager(textureManager),
-        m_gravitationalAcceleration(0.0f, -9.81f, 0.0f),
+        m_gravitationalAcceleration(0.0f, 0.0f, 0.0f),
         m_groundLevel(0.1f),
         m_barrierSize(30.0f),
         m_enableDistanceConstraints(true),

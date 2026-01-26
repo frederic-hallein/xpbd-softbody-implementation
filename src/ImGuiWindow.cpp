@@ -162,8 +162,8 @@ void DebugWindow::displayExternalForces(
     glm::vec3& gravitationalAcceleration = scene.getGravitationalAcceleration();
     ImGui::Text("Gravity:");
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    if (ImGui::Button("Reset")) {
-        gravitationalAcceleration = glm::vec3(0.0f, -9.81f, 0.0f);
+    if (ImGui::Button("Reset##Gravity")) {
+        gravitationalAcceleration = glm::vec3(0.0f, 0.0f, 0.0f);
     }
     ImGui::SliderFloat("##Gravity", &gravitationalAcceleration.y, -50.0f, 50.0f);
     ImGui::PopItemWidth();
@@ -222,16 +222,19 @@ void DebugWindow::displayXPBDParameters(
     ImGui::PopItemWidth();
     ImGui::Separator();
 
-    // float& k = scene.getOverpressureFactor();
-    // float k_max = 10.0f;
-    // ImGui::SameLine();
-    // if (ImGui::Button("Reset")) {
-    //     k = 1.0f;
-    // }
-    // ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
-    // ImGui::SliderFloat("##k", &k, 0.0f, k_max);
-    // ImGui::PopItemWidth();
-    // ImGui::Separator();
+    if (scene.getName() != "Cloth Sene") {
+        float& k = scene.getOverpressureFactor();
+        float k_max = 10.0f;
+        ImGui::Text("Overpressure:");
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
+        if (ImGui::Button("Reset##Overpressure")) {
+            k = 1.0f;
+        }
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x - 1);
+        ImGui::SliderFloat("##k", &k, 0.0f, k_max);
+        ImGui::PopItemWidth();
+        ImGui::Separator();
+    }
 }
 
 void DebugWindow::displaySceneReset(

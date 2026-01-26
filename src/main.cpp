@@ -7,7 +7,7 @@ const unsigned int SCREEN_HEIGHT = 720;
 int main(int argc, char* argv[]) {
     try {
         PhysicsEngine physicsEngine(
-            "XPBD Softbody Implementation",
+            "XPBD Softbody Simulation",
             SCREEN_WIDTH,
             SCREEN_HEIGHT
         );
