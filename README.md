@@ -172,7 +172,6 @@ After building, launch the executable:
 
 - **Right Mouse Button + Drag:** Orbit the camera around the origin.
 - **Mouse Scroll Wheel:** Move camera radially from the origin.
-- **`ESC`-Key:** quit the program.
 
 ### Object Interaction
 
@@ -194,6 +193,7 @@ After building, launch the executable:
   - Inspect vertex positions, velocities, and accelerations.
   - Switch between wireframe and filled polygon modes.
   - Toggle vertex and face normal shaders.
+- **`ESC`-Key:** quit the program.
 
 ## Future Work
 
