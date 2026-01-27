@@ -62,7 +62,7 @@ where $d_0$ is the rest distance.
 
 - A **Volume Constraint** for preserving the objects volume which is defined as:
 
-$$C(\mathbf{x}_0, ..., \mathbf{x}_n) = \left( \sum^{n_\text{triangles} - 1}_{i = 1} \frac{1}{6} (\mathbf{x}_{t_{i,0}} \times \mathbf{x}_{t_{i,1}}) \cdot \mathbf{x}_{t_{i,2}} \right) - pV_0,$$
+$$C(\mathbf{x}_0, ..., \mathbf{x}_{n-1}) = \left( \sum^{n_\text{triangles} - 1}_{i = 1} \frac{1}{6} (\mathbf{x}_{t_{i,0}} \times \mathbf{x}_{t_{i,1}}) \cdot \mathbf{x}_{t_{i,2}} \right) - pV_0,$$
 
 where $t_{i,0}, t_{i,1},$ and $t_{i,0}$ are the three indices of the vertices belonging to triangle $i$, $p$ is the overpressure factor, and $V_0$ is the rest volume.
 
