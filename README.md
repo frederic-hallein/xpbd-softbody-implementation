@@ -27,7 +27,7 @@ The project uses OpenGL for rendering and ImGui for real-time debugging and para
 <p align="center">
   <img src="assets/sphere.gif" alt="XPBD Softbody Simulation - Bouncy Sphere" width="800"/>
 </p>
-<p align="center"><b>Gif 1:</b> Bouncy sphere with distance and volume constraints. Polygon mode is set to wireframe with vertex and face normals enabled.  </p>
+<p align="center"><b>Gif 1:</b> Bouncy sphere with distance and volume constraints. Polygon mode is set to wireframe with vertex (green) and face (red) normals enabled.  </p>
 
 
 <p align="center">
