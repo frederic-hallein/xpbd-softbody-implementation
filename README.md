@@ -43,7 +43,7 @@ This project implements **Extended Position Based Dynamics (XPBD)**, a constrain
 
 ### Constraint Formulation
 
-In XPBD, constraints are mathematical functions that describe relationships between particle positions:
+In XPBD, constraints are scalar functions that describe relationships between particle positions:
 
 $$C(\mathbf{x}_0, \mathbf{x}_1, ..., \mathbf{x}_n)$$
 
