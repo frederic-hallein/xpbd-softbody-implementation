@@ -6,10 +6,10 @@
 
 
 // Scene configuration
-static constexpr std::array<std::pair<std::string_view, std::string_view>, 3> SCENE_LIST = {{
+static constexpr std::array<std::pair<std::string_view, std::string_view>, 2> SCENE_LIST = {{
     {"Sphere Scene", "sphereScene.yaml"},
-    {"Cloth Scene", "clothScene.yaml"},
-    {"Cubes Scene", "cubesScene.yaml"}
+    {"Cloth Scene", "clothScene.yaml"}
+    // {"Cubes Scene", "cubesScene.yaml"}
 }};
 
 // Shader configuration

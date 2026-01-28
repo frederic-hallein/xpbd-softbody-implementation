@@ -1,4 +1,3 @@
-#include <future>
 #include <fstream>
 #include <memory>
 #include <yaml-cpp/yaml.h>
@@ -12,7 +11,7 @@ Shader Object::s_faceNormalShader;
 std::unique_ptr<Camera> Scene::createCamera() {
     float aspectRatio = static_cast<float>(m_screenWidth) / static_cast<float>(m_screenHeight);
     return std::make_unique<Camera>(
-        glm::vec3(0.0f, 28.0f, 71.0f),
+        glm::vec3(0.0f, 31.0f, 82.0f),
         aspectRatio,
         m_window
     );
@@ -227,7 +226,8 @@ Scene::Scene(
         m_xpbdSubsteps(1),
         m_alpha(0.001f),
         m_beta(1.0f),
-        m_k(1.0f)
+        m_k(1.0f),
+        m_threadPool(std::make_unique<ThreadPool>())
 {
 }
 
@@ -832,23 +832,29 @@ void Scene::updateObjects(
     const glm::vec3& rayDir
 )
 {
-    std::vector<std::future<void>> futures;
-    futures.reserve(m_objects.size());
+    m_threadPool->parallel_for(m_objects, [this, deltaTime, cameraPos, rayDir](std::unique_ptr<Object>& obj) {
+        updateObjectTransform(*obj);
+        updateObjectPhysics(*obj, deltaTime, cameraPos, rayDir);
+        obj->update(deltaTime);
+    });
 
-    for (size_t i = 0; i < m_objects.size(); ++i) {
-        futures.push_back(
-            std::async(std::launch::async, [this, i, deltaTime, cameraPos, rayDir]() -> void {
-                auto& object = m_objects[i];
-                updateObjectTransform(*object);
-                updateObjectPhysics(*object, deltaTime, cameraPos, rayDir);
-                object->update(deltaTime);
-            })
-        );
-    }
+    // std::vector<std::future<void>> futures;
+    // futures.reserve(m_objects.size());
 
-    for (auto& future : futures) {
-        future.get();
-    }
+    // for (size_t i = 0; i < m_objects.size(); ++i) {
+    //     futures.push_back(
+    //         std::async(std::launch::async, [this, i, deltaTime, cameraPos, rayDir]() -> void {
+    //             auto& object = m_objects[i];
+    //             updateObjectTransform(*object);
+    //             updateObjectPhysics(*object, deltaTime, cameraPos, rayDir);
+    //             object->update(deltaTime);
+    //         })
+    //     );
+    // }
+
+    // for (auto& future : futures) {
+    //     future.get();
+    // }
 }
 
 void Scene::update(float deltaTime) {

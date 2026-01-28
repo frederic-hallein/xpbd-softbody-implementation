@@ -35,7 +35,7 @@ The project uses OpenGL for rendering and ImGui for real-time debugging and para
 </p>
 <p align="center"><b>Gif 1:</b> Cloth in zero-gravity with only distance constraints.</p>
 
-
+**Note:** GIF playback does not reflect real-time performance.
 
 ## Technical Overview
 
@@ -62,9 +62,9 @@ where $d_0$ is the rest distance.
 
 - A **Volume Constraint** for preserving the objects volume which is defined as:
 
-$$C(\mathbf{x}_0, ..., \mathbf{x}_{n-1}) = \left( \sum^{n_\text{triangles} - 1}_{i = 1} \frac{1}{6} (\mathbf{x}_{t_{i,0}} \times \mathbf{x}_{t_{i,1}}) \cdot \mathbf{x}_{t_{i,2}} \right) - pV_0,$$
+$$C(\mathbf{x}_0, ..., \mathbf{x}_{n-1}) = \left( \sum^{n_\text{T} - 1}_{i = 1} \frac{1}{6} (\mathbf{x}_{t_{i,0}} \times \mathbf{x}_{t_{i,1}}) \cdot \mathbf{x}_{t_{i,2}} \right) - pV_0,$$
 
-where $t_{i,0}, t_{i,1},$ and $t_{i,0}$ are the three indices of the vertices belonging to triangle $i$, $p$ is the overpressure factor, and $V_0$ is the rest volume.
+where $n_\text{T}$ is the triangle count, $t_{i,0}, t_{i,1},$ and $t_{i,0}$ are the three vertex indices belonging to triangle $i$, $p$ is the overpressure factor, and $V_0$ is the rest volume.
 
 ### Simulation Loop
 
@@ -194,6 +194,14 @@ After building, launch the executable:
   - Switch between wireframe and filled polygon modes.
   - Toggle vertex and face normal shaders.
 - **`ESC`-Key:** quit the program.
+
+## Discussion
+
+TODO: talk about performance, Tested on an Intel i5-1035G1 with integrated Iris Plus Graphics, achieving stable 60 FPS at low substep counts.
+
+## Conclusion
+
+TODO
 
 ## Future Work
 

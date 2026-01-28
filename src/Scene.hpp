@@ -15,6 +15,7 @@
 #include "Camera.hpp"
 #include "Light.hpp"
 #include "Object.hpp"
+#include "ThreadPool.hpp"
 
 struct ObjectConfig
 {
@@ -176,6 +177,8 @@ private:
     float m_alpha;
     float m_beta;
     float m_k;
+
+    std::unique_ptr<ThreadPool> m_threadPool;
 
 private:
     std::unique_ptr<Camera> createCamera();
