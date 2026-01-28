@@ -19,7 +19,8 @@ The project uses OpenGL for rendering and ImGui for real-time debugging and para
   - [Camera Controls](#camera-controls)
   - [Object Interaction](#object-interaction)
   - [Simulation Controls (ImGui Debug Window)](#simulation-controls-imgui-debug-window)
-- [Future Work](#future-work)
+- [Discussion](#discussion)
+- [Conclusion](#conclusion)
 
 ## Preview
 
@@ -202,31 +203,14 @@ After building, launch the executable:
 
 ## Discussion
 
-### Performance Characteristics
+This XPBD implementation prioritizes stability and ease of understanding over raw performance optimization. The simulator has been tested on an Intel i5-1035G1 with integrated Iris Plus Graphics across two primary scenes. Both the sphere scene (10 spheres with 647 vertices, 1920 edges, 1280 triangles per sphere) and the cloth scene (single mesh with 1334 vertices, 3855 edges, 2522 triangles) achieve stable 60 FPS at low substep counts (2-3 substeps). Performance degrades at higher substep counts, with the sphere scene achieving approximately 30 FPS at 6 substeps and the cloth scene maintaining comparable performance at approximately 30 FPS with 7 substeps.
 
-This XPBD implementation prioritizes stability and ease of understanding over raw performance optimization. The simulator has been tested on an Intel i5-1035G1 with integrated Iris Plus Graphics, achieving stable **60 FPS** at low substep counts (less than 10 substeps) with scenes containing 10 deformable objects.
+The primary computational bottleneck arises from two sources: constraint solving within individual objects and the overhead of sequentially updating multiple objects per frame. Constraint solving scales with the number of constraints and solver iterations, where substep count has the most significant impact on frame time. However, the cost of constraint solving is further amplified by object complexity — both vertex and triangle count affect constraint generation and Lagrange multiplier updates, while constraint density (distance and volume constraints per object) directly influences the number of iterations required for convergence. Additionally, updating many objects sequentially creates significant overhead when scenes contain numerous deformable bodies.
 
-TODO: drop to steady 30 fps for 10 spheres (v: 647, e: 1920, tri: 1280) with 6 substeps and cloth scene (v: 1334, e: 3855, tri: 2522) with 7 substeps
-
-### Performance Bottlenecks
-
-The primary computational bottleneck is constraint solving, which scales with the number of constraints and solver iterations. The iterative nature of XPBD means that:
-
-- **Substep count** has the most significant impact on frame time. Doubling substeps approximately doubles constraint solving cost.
-- **Object complexity** (vertex and triangle count) affects both constraint generation and Lagrange multiplier updates.
-- **Constraint density** (distance and volume constraints per object) directly influences iteration count.
-
-### Multithreading Impact (TODO: benchmark speedup)
-
-The custom thread pool implementation parallelizes object physics updates across all available CPU cores. On a dual-core system (as in the i5-1035G1), this provides approximately **1.5-1.8x speedup** compared to sequential updates, with gains diminishing due to synchronization overhead and shared memory contention. Integrated GPUs also introduce additional bottlenecks through OpenGL state management and draw call overhead, which are not parallelized.
+To address the computational bottleneck of updating multiple objects per frame, this implementation uses a custom thread pool that parallelizes object physics updates across all available CPU cores, enabling concurrent processing of multiple scene objects rather than sequential updates. This multi-threaded approach improves overall frame time by distributing the workload of updating different objects across processor cores. SIMD vectorization of vector operations within the constraint solver could leverage SSE/AVX instructions for improved throughput, while GPU acceleration via compute shaders could offload constraint solving to massive parallelism available on modern graphics hardware.
 
 
 ## Conclusion
 
-TODO
+The current implementation represents a solid foundation balancing correctness, stability, and educational clarity. The constraint-based formulation offers superior stability under large time steps compared to force-based methods, making it well-suited for exploratory prototyping and learning-oriented applications. While not production-ready for demanding real-time scenarios, the architecture provides a clear pathway for performance improvements and feature expansion. Future work includes implementing proper environment and self-collision detection through collision constraints, a natural extension of the constraint-based framework that would enable realistic interactions in complex scenarios with multiple interacting objects. Spatial partitioning techniques (bounding volume hierarchies) would support efficient broad-phase collision detection to reduce the number of constraint evaluations. Additional enhancements could include bending constraints for more realistic softbody deformation and the introduction of static and kinetic friction, which would prevent objects from gliding unrealistically across surfaces and enable more physically accurate interactions with the environment. Performance optimizations such as constraint caching, SIMD vectorization, and GPU acceleration via compute shaders also represent promising avenues for improvement.
 
-## Future Work
-
-- Implement bending constraints for more realistic softbody deformation
-- Add proper environment and self collision
-- Introduce static and kinetic friction for more accurate physical interactions
